@@ -1,7 +1,7 @@
 import numpy as np
-from codes.models import augment
-from codes.models import optimize
-from codes.models.WblGlm import WblGlm
+from models import augment
+from models import optimize
+from models.WblGlm import WblGlm
 
 
 class ExpGlm(WblGlm):

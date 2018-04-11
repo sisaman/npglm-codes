@@ -1,7 +1,7 @@
 import scipy
 
 import numpy as np
-from codes.models import augment, optimize, Model
+from models import augment, optimize, Model
 
 
 class WblGlm(Model):

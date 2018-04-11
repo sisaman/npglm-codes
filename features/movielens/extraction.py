@@ -7,7 +7,7 @@ from datetime import datetime
 
 import numpy as np
 from scipy import sparse
-from codes.features.utils import Indexer, create_sparse, timestamp_delta_generator
+from features.utils import Indexer, create_sparse, timestamp_delta_generator
 
 rating_threshold = 4
 actor_threshold = 3

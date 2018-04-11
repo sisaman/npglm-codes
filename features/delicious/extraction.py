@@ -6,7 +6,7 @@ from datetime import datetime
 
 import numpy as np
 from scipy import sparse
-from codes.features.utils import Indexer, create_sparse, timestamp_delta_generator
+from features.utils import Indexer, create_sparse, timestamp_delta_generator
 
 censoring_ratio = 0.5  # fraction of censored samples to all samples
 

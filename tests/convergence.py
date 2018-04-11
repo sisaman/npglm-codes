@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from codes.models import get_dist_rnd, generate_data
-from codes.models.NpGlm import NpGlm
+from models import get_dist_rnd, generate_data
+from models.NpGlm import NpGlm
 
 
 def convergence_vs_censoring_ratio():

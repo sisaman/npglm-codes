@@ -1,7 +1,7 @@
 import numpy as np
 
-from codes.models import augment
-from codes.models.ExpGlm import ExpGlm
+from models import augment
+from models.ExpGlm import ExpGlm
 
 
 class RayGlm(ExpGlm):

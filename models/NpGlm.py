@@ -1,7 +1,7 @@
 import logging
 import numpy as np
-from codes.models import Model
-from codes.models import optimize
+from models import Model
+from models import optimize
 
 
 class NpGlm(Model):

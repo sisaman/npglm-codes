@@ -8,7 +8,7 @@ import threading
 import numpy as np
 from scipy import sparse
 from nltk.corpus import stopwords as stop_words
-from codes.features.utils import Indexer, create_sparse
+from features.utils import Indexer, create_sparse
 
 path = 'th'
 censoring_ratio = 0.5  # fraction of censored samples to all samples

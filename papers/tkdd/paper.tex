@@ -1,3 +1,4 @@
+\pdfoutput=1
 \documentclass[format=acmsmall, review=false, screen=true]{acmart}
 
 \usepackage{bm}
@@ -11,6 +12,15 @@
 \usepackage{tabu}
 \usepackage{multirow}
 \usepackage[ruled]{algorithm2e}
+\usepackage{hyperref}           %5
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=red,      
+	urlcolor=magenta,
+	breaklinks=true,            %3
+}
+\usepackage{breakurl}           %3
 \pgfplotsset{compat=1.13}
 \usetikzlibrary{arrows,positioning,decorations,shapes}
 
@@ -23,17 +33,18 @@
 
 % Metadata Information
 \acmJournal{TKDD}
-\acmVolume{9}
-\acmNumber{4}
-\acmArticle{39}
-\acmYear{2010}
-\acmMonth{3}
-\copyrightyear{2009}
+%\acmVolume{9}
+%\acmNumber{4}
+\acmArticle{1}
+\acmYear{2018}
+%\acmMonth{3}
+%\copyrightyear{2009}
 %\acmArticleSeq{9}
 
 % Copyright
+\setcopyright{none}
 %\setcopyright{acmcopyright}
-\setcopyright{acmlicensed}
+%\setcopyright{acmlicensed}
 %\setcopyright{rightsretained}
 %\setcopyright{usgov}
 %\setcopyright{usgovmixed}
@@ -41,12 +52,14 @@
 %\setcopyright{cagovmixed}
 
 % DOI
-\acmDOI{0000001.0000001}
+%\acmDOI{0000001.0000001}
 
 % Paper history
-\received{February 2007}
-\received[revised]{March 2009}
-\received[accepted]{June 2009}
+%\received{February 2007}
+%\received[revised]{March 2009}
+%\received[accepted]{June 2009}
+
+\settopmatter{printacmref=false}
 
 
 \begin{document}
@@ -67,13 +80,13 @@
 
 \author{Sogol Bazargani}
 \affiliation{%
-	\institution{Digital Media Laboratory, Sharif University of Technology}
+	\institution{Department of Computer Engineering, Sharif University of Technology}
 	\streetaddress{Azadi Ave}
 	\city{Tehran}
 	\state{Tehran}
 	\postcode{1458889694}
 	\country{Iran}}
-\email{bazargani@dml.ir}
+
 
 \author{Jiawei Zhang}
 \affiliation{%

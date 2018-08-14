@@ -92,7 +92,7 @@ In this part, we describe how to utilize the temporal history of the network in 
 	In a heterogeneous information network, a meta-path is a directed path following the graph of the network schema to describe the general relations that can be derived from the network. Formally speaking, given a network schema $\mc{S}_G=(\mc{V}, \mc{E})$, the sequence $\nu_1\xrightarrow{\varepsilon_1}\nu_2\xrightarrow{\varepsilon_2}\dots\nu_{k-1}\xrightarrow{\varepsilon_{k-1}}\nu_k$ is a meta-path defined on $S_G$ where $\nu_i\in \mc{V}$ and $\varepsilon_i\in \mc{E}$.
 \end{definition} 
 
-Meta-paths are commonly used in heterogeneous information networks to describe multi-typed relations that have concrete semantic meanings. For example, in the bibliographic network whose schema are show in Fig.~\ref{fig:schema:dblp}, we can define the co-authorship relation by the following meta-path:
+Meta-paths are commonly used in heterogeneous information networks to describe multi-typed relations that have concrete semantic meanings. For example, in the bibliographic network whose schema is shown in Fig.~\ref{fig:schema:dblp}, we can define the co-authorship relation by the following meta-path:
 \[Author\xrightarrow{write}Paper\xleftarrow{write}Author\]
 or simply by $A\rightarrow P\leftarrow A$. Another example is the author citation relation, which in this paper is used as the target relation for DBLP network. It can be specified as:
 \[Author\xrightarrow{write}Paper\xrightarrow{cite}Paper\xleftarrow{write}Author\]
@@ -104,7 +104,7 @@ The concept of similarity meta-paths can be extended to define heterogeneous fea
 \begin{enumerate}
 	\small
 	\item $A\xrsquigarrow{similarity}A\xrsquigarrow{target}B$
-	\item $A\xrsquigarrow{target}B\xrsquigarrow{similarity}A$
+	\item $A\xrsquigarrow{target}B\xrsquigarrow{similarity}B$
 	\item $A\xrsquigarrow{relation}C\xrsquigarrow{relation}B$
 \end{enumerate}
 where $\rightsquigarrow$ denotes a meta-path, with labels \emph{similarity} and \emph{target} denoting a similarity meta-path and the target relation, respectively. The \emph{relation} label denotes an arbitrary meta-path relating two nodes of possibly different types. The first block tells that there are some nodes of type $A$ similar to a single node of the same type that has made the target relationship with a node of type $B$. Therefore, those similar nodes may also form the target relation with the type $B$ node. An analogous intuition is behind the second block. For the third, it says that some nodes of type $A$ are in relation with some type $C$ nodes, which are themselves in relation with some nodes of type $B$. Hence, it is likely that type $A$ nodes form some relationships, such as the target relationship, with type $B$ nodes.
@@ -114,17 +114,21 @@ As an example in DBLP bibliographic network, for the target relation we use $A\r
 After specifying the suitable meta-paths, we need a method to quantify them as features. Due to the dynamicity of the network, different links are emerging and vanishing from the network over time. Therefore, the quantifying method must handle this dynamicity. Here, we formally define \emph{Time-Aware Meta-Path-based Features}:
 
 \begin{definition}[Time-Aware Meta-Path-based Feature]
-	Suppose that we are given a dynamic heterogeneous network $G^{\tau}$ along with its network schema $\mc{S}_G=(\mc{V}, \mc{E})$, and a target Relation $A\rightsquigarrow B$. For a given pair of nodes $a\in A$ and $b\in B$, and a meta-path $\Psi=\nu_1\xrightarrow{\varepsilon_1}\nu_2\xrightarrow{\varepsilon_2}\dots\nu_{k-1}\xrightarrow{\varepsilon_{k-1}}\nu_k$ defined on $\mc{S}_G$, the time-aware meta-path-based feature at the timestamp $\tau$ is calculated as:
+	Suppose that we are given a dynamic heterogeneous network $G^{\tau}$ along with its network schema $\mc{S}_G=(\mc{V}, \mc{E})$, and a target Relation $A\rightsquigarrow B$. {\color{red}For a given pair of nodes $a\in A$ and $b\in B$, and a meta-path $\Psi=A\xrightarrow{\varepsilon_1}\nu_1\xrightarrow{\varepsilon_2}\dots\nu_{n-1}\xrightarrow{\varepsilon_{n}}B$ defined on $\mc{S}_G$, the time-aware meta-path-based feature at the timestamp $\tau$ is calculated as:
 	\begin{equation*}
-		\begin{split}
-			&f_{\Psi}^\tau(a,b)={\color{red}\mb{1}(a\in A)\mb{1}(b\in B)}\\
-			&\sum_{n_1\in\nu_1,\dots,n_k\in\nu_k}\prod_{i=1}^{k-1}\mb{1}\Big((n_i,n_{i+1})\in\varepsilon_i\Big)\mb{1}\Big(bt(n_i,n_{i+1}) < \tau \le dt(n_i,n_{i+1})\Big)
-		\end{split}
-	\end{equation*}
-	where $\mb{1}(.)$ is the binary predicate function, and $bt(n_i,n_{i+1})$ and $dt(n_i,n_{i+1})$ denote the birth and the death time of the link $(n_i,n_{i+1})$, respectively.
+		f_{\Psi}^\tau(a,b)=\Big(\prod_{i=1}^{n}M^\tau_{\varepsilon_i}\Big)_{a,b}
+	\end{equation*}}
 \end{definition}
 
-By using the above definition, we will be able to quantify the number of instances of any particular meta-path at any specific timestamp. If we set this timestamp to the end of the feature extraction window, it is as though we are aggregating the whole network into a single snapshot observed at time $t_0+\Phi$. In order to avoid such an aggregation, we divide the feature extraction window into a sequence of $k$ contiguous intervals of a constant size $\Delta$, as shown in Fig.~\ref{fig:timeline}. By doing so, we intend to extract time-aware features in each sub-window that results in a multivariate time series containing the information about the temporal evolution of the topological features between any pair of nodes. With this in mind, we define \emph{Dynamic Meta-Path-based Time Series} as follows:
+By using the above definition, we will be able to quantify the number of instances of any particular meta-path at any specific timestamp $\tau$. {\color{red}The calculation of the above matrix multiplication can be done efficiently due to the following reasons:
+\begin{enumerate}
+\item The heterogeneous adjacency matrices are sparse, thus we can hugely reduce the time complexity of each single matrix multiplication using fast sparse matrix multiplication algorithms, such as \cite{yuster2005fast}.
+\item The meta-paths we use for features can be decoupled into the the building blocks where each block is simply a similarity meta-path. Therefore, we can calculate the adjacency matrix of each similarity meta-path and then multiply them together to get the final matrix, avoiding recalculation of previously computed products.
+\item Computation time for the similarity meta-paths can also be saved, as they are usually symmetric (look for example at those presented in Table~\ref{table:meta}). Therefore, we can reduce the number of products by transposing the intermediate results. For instance, the adjacency matrix of the similarity meta-path $A\rightarrow P\leftarrow V\rightarrow P\leftarrow A$ is $X\cdot X^T$ where $X=M_{\text{write}}\cdot M_{\text{publish}}$, reducing the number of multiplications from three to two.
+\end{enumerate}
+}
+
+So far we proposed a method to calculate the time-aware meta-path-based features, which is the number of path instances of a particular meta-path at the timestamp $\tau$. If we set this timestamp to the end of the feature extraction window, it is as though we are aggregating the whole network into a single snapshot observed at time $t_0+\Phi$. In order to avoid such an aggregation, we divide the feature extraction window into a sequence of $k$ contiguous intervals of a constant size $\Delta$, as shown in Fig.~\ref{fig:timeline}. By doing so, we intend to extract time-aware features in each sub-window that results in a multivariate time series containing the information about the temporal evolution of the topological features between any pair of nodes. With this in mind, we define \emph{Dynamic Meta-Path-based Time Series} as follows:
 
 \begin{definition}[Dynamic Meta-Path-based Time Series]
 	Suppose that we are given a dynamic heterogeneous network $G^{\tau}$ observed in a feature extraction window of size $\Phi$ ($t_0<\tau \le t_0+\Phi$), along with its network schema $\mc{S}_G=(\mc{V}, \mc{E})$ and a target relation $A\rightsquigarrow B$. Also suppose that the feature extraction window is divided into $k$ fragments of size $\Delta$. For a given pair of nodes $a\in A$ and $b\in B$ in $G^{t_0+\Phi}$, and a meta-path $\Psi$ defined on $\mc{S}_G$, the dynamic meta-path-based time series of $(a,b)$ is calculated as:

@@ -90,21 +90,21 @@ Since we don't know the form of $h(t)$, we cannot directly calculate the integra
 H(t_i)=\int_{0}^{t_i}h(t)dt \simeq \sum_{j=1}^{i}h(t_j)(t_j-t_{j-1})
 \end{equation}
 assuming samples are sorted by $t$ in increasing order, without loss of generality. The function $H(t)$ defined above plays an important role in both learning and inference phases. In fact, both the learning and inference phases rely on $H(t)$ instead of $h(t)$, which we will see later in this paper.
-Replacing the above series in the likelihood and taking the logarithm, we end up with the following log-likelihood function{\color{red}, denoted by $\log\mathcal{L}$}:
+Replacing the above series in the likelihood, taking the logarithm and negating, we end up with the following {\color{red}negative log-likelihood function, simply called the \emph{loss function}, denoted by $L$}:
 
 \begin{equation}\label{eq:logl}
 \begin{split}
-\log\mathcal{L}
-=\sum_{i=1}^{N}\Big\lbrace& y_i\left[\log g(\mb{w}^T\mb{x}_i) + \log h(t_i)\right]\\&-g(\mb{w}^T\mb{x}_i)\sum_{j=1}^{i}h(t_j)(t_j-t_{j-1})\Big\rbrace\\
+L(\mb{w},h)
+=\sum_{i=1}^{N}\Big\lbrace g(\mb{w}^T\mb{x}_i)\sum_{j=1}^{i}h(t_j)(t_j-t_{j-1})-y_i\left[\log g(\mb{w}^T\mb{x}_i) + \log h(t_i)\right]\Big\rbrace\\
 \end{split}
 \end{equation}
 
-The log-likelihood function depends on the vector $\mb{w}$ and the function $h(t)$. In the next part, we explain an iterative learning algorithm to learn both $\mb{w}$ and $h(t)$ collectively.
+The loss function depends on both the vector $\mb{w}$ and the function $h(t)$. In the next part, we explain an iterative learning algorithm to learn both $\mb{w}$ and $h(t)$ collectively.
 
 \subsection{Learning Algorithm}
-Maximizing the log-likelihood function (Eq.~\ref{eq:logl}) relies on the choice of the function $g$. There are no particular limits on the choice of $g$ except that it must be a non-negative function. For example, both quadratic and exponential functions of $\mb{w}^T\mb{x}$ will do the trick. Here, we proceed with $g(\mb{w}^T\mb{x})=\exp(\mb{w}^T\mb{x})$ since it makes the log-likelihood a convex function with respect to $\mb{w}$. Subsequent equations can be derived for other choices of $g$ analogously.
+Minimizing the loss function (Eq.~\ref{eq:logl}) relies on the choice of the function $g$. There are no particular limits on the choice of $g$ except that it must be a non-negative function. For example, both quadratic and exponential functions of $\mb{w}^T\mb{x}$ will do the trick. Here, we proceed with $g(\mb{w}^T\mb{x})=\exp(\mb{w}^T\mb{x})$ since it makes the loss function convex with respect to $\mb{w}$. Subsequent equations can be derived for other choices of $g$ analogously.
 
-Setting the log-likelihood derivative with respect to $h(t_k)$ to zero yields a closed form solution for $h(t_k)$:
+Setting the derivative of the loss function with respect to $h(t_k)$ to zero yields a closed form solution for $h(t_k)$:
 \begin{equation}\label{eq:h}
 h(t_k)=\frac{y_k}{(t_k-t_{k-1})\sum_{i=k}^{N}\exp(\mb{w}^T\mb{x}_i)}
 \end{equation}
@@ -113,10 +113,10 @@ By applying Eq.~\ref{eq:cumh}, we get the following for $H(t_i)$:
 \begin{equation}\label{eq:H}
 H(t_i)=\sum_{j=1}^{i}\frac{y_j}{\sum_{k=j}^{N}\exp(\mb{w}^T\mb{x}_k)}
 \end{equation}
-which depends on the vector $\mb{w}$. On the other hand, we cannot obtain a closed form solution for $\mb{w}$ from the log-likelihood function. Therefore, we turn to use Gradient-based optimization methods to find the optimal value of $\mb{w}$. The negative log-likelihood function with respect to $\mb{w}$, denoted by $NL(\mb{w})$ is as follows:
+which depends on the vector $\mb{w}$. On the other hand, we cannot obtain a closed form solution for $\mb{w}$ from the loss function. Therefore, we turn to use Gradient-based optimization methods to find the optimal value of $\mb{w}$. The loss function with respect to $\mb{w}$ is as follows:
 
 \begin{equation}\label{eq:nlw}
-NL(\mb{w})=\sum_{i=1}^{N}\left\lbrace\exp(\mb{w}^T\mb{x}_i)H(t_i)-y_i\mb{w}^T\mb{x}_i\right\rbrace
+L(\mb{w})=\sum_{i=1}^{N}\left\lbrace\exp(\mb{w}^T\mb{x}_i)H(t_i)-y_i\mb{w}^T\mb{x}_i\right\rbrace + Const.
 \end{equation}
 which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depends on each other, they should be learned collectively. Here, we use an iterative algorithm to learn $\mb{w}$ and $H$ alternatively. We begin with a random vector $\mb{w}^{(0)}$. Then in each iteration $\tau$, we first update $H^{(\tau)}$ via Eq.~\ref{eq:H} using $w^{(\tau-1)}$. Next, we optimize Eq.~\ref{eq:nlw} using the values of $H^{(\tau)}(t_i)$ to obtain $\mb{w}^{(\tau)}$. We continue this routine until convergence. The pseudo code of the learning procedure is available in Algorithm~\ref{alg:learning}.
 
@@ -128,15 +128,15 @@ which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depe
 	$converged\leftarrow False$\;
 	$threshold\leftarrow10^{-4}$\;
 	$\tau\leftarrow 0$\;
-	$\log\mathcal{L}^{(\tau)}=-\infty$\;
+	$L^{(\tau)}=\infty$\;
 	Initialize $\mb{w}^{(\tau)}$ with random values\;
 	\While{Not $converged$}{
 		$\tau\leftarrow\tau+1$\;
 		Use Eq.~\ref{eq:H} to obtain $\mb{H}^{(\tau)}$ using $\mb{w}^{(\tau-1)}$\;
-		Optimize Eq.~\ref{eq:nlw} to obtain $\mb{w}^{(\tau)}$ using $\mb{H}^{(\tau)}$\;
-		Use Eq.~\ref{eq:logl} to obtain $\log\mathcal{L}^{(\tau)}$ using $\mb{w}^{(\tau)}$ and $\mb{H}^{(\tau)}$\;
+		Minimize Eq.~\ref{eq:nlw} to obtain $\mb{w}^{(\tau)}$ using $\mb{H}^{(\tau)}$\;
+		Use Eq.~\ref{eq:logl} to obtain $L^{(\tau)}$ using $\mb{w}^{(\tau)}$ and $\mb{H}^{(\tau)}$\;
 		
-		\If{$\left\|\log\mathcal{L}^{(\tau)} - \log\mathcal{L}^{(\tau-1)}\right\| < threshold$}{
+		\If{$\left\|{L}^{(\tau)} - {L}^{(\tau-1)}\right\| < threshold$}{
 			$converged\leftarrow True$\;
 		}
 	}
@@ -146,6 +146,38 @@ which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depe
 	\label{alg:learning}
 \end{algorithm}
 
+{\color{red}\subsection{Convergence Analysis}
+
+We now aim to prove that the convergence of the Algorithm~\ref{alg:learning} is guaranteed. For that purpose, we first show that the loss function with respect to each of $\mb{w}$ and $h$ is convex, and then we proceed with the proof of convergence:
+
+\begin{lemma}
+The loss function with respect to the vector $\mb{w}$ is convex.
+\end{lemma}
+\begin{proof}
+The gradient of the loss function with respect to $\mb{w}$ is:
+\[\nabla_\mb{W}L=\sum_{i=1}^{N}\left\lbrace\exp(\mb{w}^T\mb{x}_i)H(t_i)\mb{x}_i-y_i\mb{x}_i\right\rbrace\]
+Subsequently, the Hessian matrix becomes:
+\[H_\mb{W}=\sum_{i=1}^{N}\exp(\mb{w}^T\mb{x}_i)H(t_i)\mb{x}_i\mb{x}_i^T\]
+Since for all $i$, $\mb{x}_i\mb{x}_i^T$ is a positive-definite matrix and both $\exp(\mb{w}^T\mb{x}_i)$ and $H(t_i)$ are non-negative functions, the second derivative is a positively weighted sum over positive-definite matrices and thus itself is positive-definite, making the loss function convex with respect to the vector $\mb{w}$.
+\end{proof}
+
+\begin{lemma}
+	The loss function with respect to $h(t_k)$, $1\le k \le N$, is convex.
+\end{lemma}
+\begin{proof}
+	Taking the first partial derivative of the loss function with respect to $h(t_k)$ we get:
+\[\frac{\partial L}{\partial h(t_k)}=(t_k-t_{k-1})\sum_{i=k}^{N}\exp(w^Tx_i)-\frac{y_k}{h(t_k)}\]
+Then for the second partial derivative we have:
+\[\frac{\partial^2 L}{\partial h^2(t_k)}=\frac{y_k}{h^2(t_k)} \ge 0\]
+that proves the convexity.
+\end{proof}
+
+\begin{theorem}
+The learning algorithm of \npglm (Algorithm~\ref{alg:learning}) that optimizes the loss function (Eq~\ref{eq:logl}) is convergent.
+\end{theorem}
+\begin{proof}
+Since the loss function with respect to both $\mb{w}$ and $h(t_k)$ is convex, both subproblems have solutions, and the sequence $\lbrace\mb{w}^{(\tau)},\mb{H}^{(\tau)}\rbrace$ generated by Algorithm~\ref{alg:learning} as a two-block Gauss–Seidel method has limit points. Therefore, according to \cite{grippo2000convergence}, every limit points of $\lbrace\mb{w}^{(\tau)},\mb{H}^{(\tau)}\rbrace$ is stationary, making the algorithm convergent.
+\end{proof}}
 
 %\subsection{Convergence Analysis}
 %To analyze the convergence of likelihood maximization, we look at the likelihood function close to the extreme point (which we denote with $w_e$). For the extreme point $\frac{\partial \log \mathcal{L}}{\partial w}$ vanishes so we have: 

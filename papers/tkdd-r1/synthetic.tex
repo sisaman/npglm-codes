@@ -2,7 +2,7 @@
 We use synthetic data to verify the correctness of \npglm and its learning algorithm. Since \npglm is a non-parametric method, we generate synthetic data using various parametric models with previously known random parameters, and evaluate how well \npglm can learn the parameters and the underlying distribution of the generated data.
 
 \subsection{Experiment Setup}
-We consider generalized linear models of two widely used distributions for event-time modeling, Rayleigh and Gompertz, as the ground truth models for generating synthetic data. Algorithm~\ref{alg:syn} is used to generate a total of $N$ data samples with $d$-dimensional feature vectors, consisting $N_o$ non-censored (observed) samples and remaining $N_c=N-N_o$ censored ones. For all synthetic experiments, we generate 10-dimensional feature vectors ($d=10$) and set $g(\mb{w}^T\mb{x})=\exp(\mb{w}^T\mb{x})$. We repeat every experiment 100 times and report the average results.
+We consider generalized linear models of two widely used distributions for event-time modeling, Rayleigh and Gompertz, as the ground truth models for generating synthetic data. Algorithm~\ref{alg:syn} is used to generate a total of $N$ data samples with $d$-dimensional feature vectors, consisting $N_o$ non-censored (observed) samples and remaining $N_c=N-N_o$ censored ones. For all synthetic experiments, we generate 10-dimensional feature vectors ($d=10$). We repeat every experiment 100 times and report the average results.
 
 \begin{algorithm}[t]
 	\small
@@ -37,6 +37,7 @@ We consider generalized linear models of two widely used distributions for event
 
 
 \subsection{Experiment Results}
+\subsubsection{Convergence Analysis}
 Since \npglm's learning is done in an iterative manner, we first analyze whether this algorithm converges as the number of iterations increases. We recorded the log-likelihood of \npglm, averaged over the number of training samples $N$ in each iteration. We repeated this experiment for $N\in\{1000,2000,3000\}$ with a fixed censoring ratio of 0.5, which means half of the samples are censored. The result is depicted in Fig.~\ref{fig:syn-cvg-n}. We can see that the algorithm successfully converges with a rate depending on the underlying distribution. For the case of Rayleigh, it requires about 100 iterations to converge but for Gompertz, this reduces to about 30. Also, we see that using more training data leads to achieving more log-likelihood as expected.
 
 
@@ -45,12 +46,31 @@ In Fig.~\ref{fig:syn-cvg-c}, we fixed $N=1000$ and performed the same experiment
 
 
 %Next, we analyzed the performance of \npglm in terms of the achieved log-likelihood on a separate test dataset by gradually increasing the number of training samples under different censoring ratios. We put away a number of 100K synthetically generated test data samples and trained \npglm with a training dataset of size ranging from 100 to 900. In each step, we calculated the average log-likelihood of the trained model on the test. We repeated this experiment using different censoring ratios. The result is depicted in Fig.~\ref{fig:syn-logl-n}. According to the figure, the log-likelihood achieved on the test dataset gradually rises with the increase in the number of training samples. That is because using more training samples could result in a better estimate of the parameters by which the test data samples are generated.
-
+\subsubsection{Performance Analysis}
 Next, we evaluated how good \npglm can infer the parameters used to generate synthetic data. To this end, we varied the number of training samples $N$ and measured the mean absolute error (MAE) between the learned weight vector $\hat{\mathbf{w}}$ and the ground truth. Fig.~\ref{fig:syn-mae-n} illustrates the result for different censoring ratios. It can be seen that as the number of training samples increases, the MAE gradually decreases. The other point to notice is that more censoring ratio results in higher error due to the information loss we get by censoring.
 
+In another experiment, we investigated whether censored samples are informative or not. For this purpose, we fixed the number of observed samples $N_o$ and changed the number of censored samples from 0 to 200. We measured the MAE between the learned $\mb{w}$ and the ground truth for $N_o\in\{200,300,400\}$. The result is shown in Fig.~\ref{fig:syn-mae-c}. It clearly demonstrates that adding more censored samples causes the MAE to dwindle up to an extent, after which we get no substantial improvement. This threshold is dependent on the underlying distribution. In this case, for Rayleigh and Gompertz it is about 80 and 120, respectively.
 
+{\color{red}
+\subsubsection{Running Time Analysis}	
+Finally, we assessed the running time of \npglm's learning algorithm against the size of the training data when it becomes relatively large. To this end, we varied the number of samples from 10K to 100M, and measured the average running time of the learning algorithm of \npglm on a single machine whose specification is reported in Table~\ref{table:pc}. Fig.~\ref*{fig:syn-time-n} depicts the result in log-log scale for Rayleigh and Gompertz distributions under different censoring ratios selected from the set $\{0.05, 0.25, 0.50\}$. It can be seen from the figure that the running time scales linearly with the number of training samples, since the number of parameters to be inferred in \npglm as a non-parametric model depends on the size of the training data. The censoring ratio though negligible in scale, can impact the running time of the algorithm, with more censoring ratio resulting in less running time. This is because higher censoring ratio reduces the observation window, which in turn reduces the number of parameters, as mentioned before.}
 
-Finally, we investigated whether censored samples are informative or not. For this purpose, we fixed the number of observed samples $N_o$ and changed the number of censored samples from 0 to 200. We measured the MAE between the learned $\mb{w}$ and the ground truth for $N_o\in\{200,300,400\}$. The result is shown in Fig.~\ref{fig:syn-mae-c}. It clearly demonstrates that adding more censored samples causes the MAE to dwindle up to an extent, after which we get no substantial improvement. This threshold is dependent on the underlying distribution. In this case, for Rayleigh and Gompertz it is about 80 and 120, respectively.
+\begin{table}[t!]
+	\centering
+	\caption{PC Specification and Configuration}
+	\label{table:pc}
+	%	\footnotesize
+	\begin{tabular} {c c}
+		\toprule
+		Operating System & Windows 10\\
+		CPU & Intel Core i7 1.8 GHz\\
+		RAM & 12 GB DDR III\\
+		GPU & Nvidia GeForce GT 750\\
+		Disk Type & SSD\\
+		Programming Language & Python 3.6 \\
+		\bottomrule % Bottom horizontal line
+	\end{tabular}
+\end{table}
 
 \begin{figure}[t]
 	\subfloat[Rayleigh distribution]{
@@ -431,4 +451,86 @@ Finally, we investigated whether censored samples are informative or not. For th
 	}
 	\caption{\npglm's mean absolute error (MAE) vs the number of censored samples ($N_c$) for different number of observed samples ($N_o$).}
 	\label{fig:syn-mae-c}
+\end{figure}
+
+
+
+
+
+\begin{figure}[t]
+	\subfloat[Rayleigh distribution]{
+		\begin{tikzpicture}[trim axis left, trim axis right]
+		\begin{axis}
+		[
+		tiny,
+		width=0.4\columnwidth,
+		height=4.5cm,
+		legend pos=south east,
+		legend style={font=\scriptsize,nodes={scale=0.75, transform shape}},
+		grid,
+%		y tick label style={
+%			/pgf/number format/.cd,
+%			fixed,
+%			fixed zerofill,
+%			precision=2,
+%			/tikz/.cd
+%		},
+		xlabel=$N$,
+		ylabel=$T\ \ (seconds)$,
+		ylabel shift = -4 pt,
+		%xticklabel style={rotate=90},
+%		ymax=0.35,
+%		xmin=3,
+%		xmax=9,
+%		ytick={0.05,0.10,...,0.35},
+%		xtick={1000,10000,...,1000000000},
+		xmode=log,
+		ymode=log,
+%		restrict x to domain=0:900,
+		legend entries={0\% censoring, 25\% censoring, 50\% censoring},
+		]
+		\addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/time_ray_5.txt};
+		\addplot[color=cyan,mark=*,mark size=1.1,thick] table{results/time_ray_25.txt};
+		\addplot[color=orange,mark=triangle*,mark size=1.5,thick] table{results/time_ray_50.txt};
+		\end{axis}
+		\end{tikzpicture}
+	}\hfil
+	\subfloat[Gompertz distribution]{
+		\begin{tikzpicture}[trim axis left, trim axis right]
+		\begin{axis}
+		[
+		tiny,
+		width=0.4\columnwidth,
+		height=4.5cm,
+		legend pos=south east,
+		legend style={font=\scriptsize,nodes={scale=0.75, transform shape}},
+		grid,
+%		y tick label style={
+%			/pgf/number format/.cd,
+%			fixed,
+%			fixed zerofill,
+%			precision=2,
+%			/tikz/.cd
+%		},
+		xlabel=$N$,
+		ylabel=$T\ \ (seconds)$,
+		ylabel shift = -4 pt,
+		%xticklabel style={rotate=90},
+		%		ymax=0.35,
+		%		xmin=3,
+		%		xmax=9,
+		%		ytick={0.05,0.10,...,0.35},
+		%		xtick={1000,10000,...,1000000000},
+		xmode=log,
+		ymode=log,
+		legend entries={0\% censoring, 25\% censoring, 50\% censoring},
+		]
+		\addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/time_gom_5.txt};
+		\addplot[color=cyan,mark=*,mark size=1.1,thick] table{results/time_gom_25.txt};
+		\addplot[color=orange,mark=triangle*,mark size=1.5,thick] table{results/time_gom_50.txt};
+		\end{axis}
+		\end{tikzpicture}
+	}
+	\caption{\npglm's average running time ($T$) measured in seconds vs the number of training samples ($N$) in $\log-\log$ scale for different censoring ratios.}
+	\label{fig:syn-time-n}
 \end{figure}

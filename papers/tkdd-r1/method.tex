@@ -21,7 +21,7 @@
 	\end{tabu}
 \end{table*}
 
-\section{Proposed Non-Parametric Model}\label{sec:method}
+\section{Supervised Non-Parametric Model}\label{sec:method}
 In this section we introduce our proposed model, called \emph{Non-Parametric Generalized Linear Model}, to solve the problem of continuous-time relationship prediction based on the extracted features. 
 Since the relationship building time is treated as a continuous random variable, we attempt to model the probability distribution of this time, given the features of the target relationship. Thus, if we denote the target relationship building time by $t$ and its features by $\mb{x}$, our aim is to model the probability density function $f_T(t\mid \mb{x})$. A conventional approach to modeling this function is to fix a parametric distribution for $t$ (e.g. Exponential distribution) and then relate $\mb{x}$ to $t$ using a Generalized Linear Model \cite{sun2012will}. The major drawback of this approach is that we need to know the exact distribution of the relationship building time, or at least, we could guess the best one that fits. The alternative way that we follow is to learn the shape of $f_T(t\mid \mb{x})$ from the data using a non-parametric solution.
 
@@ -66,7 +66,7 @@ f_T(t)=\lambda(t)\exp(-\Lambda(t))
 Table \ref{table:dists} shows the density, survival, intensity, and cumulative intensity functions of some widely-used distributions for event time modeling.
 
 \subsection{Model Description}
-Looking at Eq.~\ref{eq:intensity}, we see that the density function can be specified uniquely with its intensity function. Since the intensity function often has a simpler form than the density itself, if we learn the shape of the intensity function, then we can infer the entire distribution eventually. Therefore, we focus on learning the shape of the conditional intensity function $\lambda(t\mid \mb{x})$ from the data, and then accordingly infer the conditional density function $f_T(t\mid \mb{x})$ based on the learned intensity.
+Looking at Eq.~\ref{eq:density}, we see that the density function can be specified uniquely with its intensity function. Since the intensity function often has a simpler form than the density itself, if we learn the shape of the intensity function, then we can infer the entire distribution eventually. Therefore, we focus on learning the shape of the conditional intensity function $\lambda(t\mid \mb{x})$ from the data, and then accordingly infer the conditional density function $f_T(t\mid \mb{x})$ based on the learned intensity.
 In order to reduce the hypothesis space of the problem and avoid the curse of dimensionality, we assume that $\lambda(t\mid \mb{x})$, which is a function of both $t$ and $\mb{x}$, can be factorized into two separate positive functions as the following:
 \begin{equation}\label{eq:lambda}
 \lambda(t\mid \mb{x})=g(\mb{w}^T\mb{x})h(t)

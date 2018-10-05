@@ -102,7 +102,7 @@ In this paper, we consider the case that an information network is both dynamic 
 {\color{red}In order to formally describe the state of a heterogeneous and dynamic network at any timestamp $\tau$, we define \emph{time-aware heterogeneous adjacency matrix} as bellow:
 	
 	\begin{definition}{(Time-Aware Heterogeneous Adjacency Matrix)}
-		Given a heterogeneous network $G$ with schema $\mc{S}_G=(\mc{V}, \mc{E})$, for each link type $\varepsilon\in\mc{E}$ denoting the relation between node types $\nu_i,\nu_j\in\mc{V}$, the time-aware heterogeneous adjacency matrix $M^\tau_{\varepsilon}$ is a binary matrix representing if nodes of type $\nu_i$ are in relation with nodes of type $\nu_j$ with link type $\varepsilon$ at the timestamp $\tau$. More formally, for $a\in\nu_i$ and $b\in\nu_j$ we have:
+		Given a dynamic heterogeneous network $G^\tau$ with schema $\mc{S}_G=(\mc{V}, \mc{E})$, for each link type $\varepsilon\in\mc{E}$ denoting the relation between node types $\nu_i,\nu_j\in\mc{V}$, the time-aware heterogeneous adjacency matrix $M^\tau_{\varepsilon}$ is a binary matrix representing if nodes of type $\nu_i$ are in relation with nodes of type $\nu_j$ with link type $\varepsilon$ at the timestamp $\tau$. More formally, for $a\in\nu_i$ and $b\in\nu_j$ we have:
 		\[M^\tau_{\varepsilon}(a,b)=\begin{cases} 
 		1, & \text{if}\quad(a,b)\in\varepsilon\quad\text{and}\quad bt(a,b) < \tau \le dt(a,b) \\
 		0, & \text{otherwise}
@@ -113,6 +113,12 @@ In this paper, we consider the case that an information network is both dynamic 
 }
 
 \subsection{Continuous-Time Relationship Prediction}
-Suppose that we are given a dynamic and heterogeneous information network as $G^{\tau}$ lastly observed at the timestamp $\tau$, together with its network schema $S_G$. Now, given the target relation $R$, the aim of continuous-time relationship prediction is to continuously forecast the relationship building time $t\ge \tau$ of $R$ for any node pair of $G^{\tau}$ provided in a query.
+Suppose that we are given a dynamic and heterogeneous information network as $G^{\tau}$ lastly observed at the timestamp $\tau$, together with its network schema $S_G$. Now, given the target relation $R$, the aim of continuous-time relationship prediction is to forecast the building time $t\ge \tau$ of the target relation $R$ between any node pair $(a,b)$ in $G^{\tau}$.
 
-To solve this problem, we first introduce a feature extraction framework to cope with both dynamicity and heterogeneity of the network built upon on the concepts and definitions provided earlier in this section, and then propose a non-parametric model which utilizes the extracted features to perform predictions about the building time of the target relationship.
+{\color{red}
+	In order to solve this problem, we aim to train a supervised model that given a pair of nodes like $(a,b)$, it can predict a point estimate on the time it takes for the relationship of type $R$ to be formed between them. The input to such model will be a feature vector $\mb{x}$ corresponding to the node pair $(a,b)$. The model will then output with a continuous variable $t$ that indicates when the relationship of type $R$ will be built between $a$ and $b$. In order to train such model, we need to assemble a dataset comprising the feature vectors of all the node pairs between which the relation $R$ have already been formed. The process of selecting sample node pairs, extracting their feature vector, and training the supervised model are what we cover in the subsequent sections. 
+}
+%In the next section, we introduce a feature extraction framework to cope with both dynamicity and heterogeneity of the network built upon the concepts and definitions provided earlier. Then in Section~\ref{sec:method}, we propose a non-parametric model which utilizes the extracted features to perform predictions about the building time of the target relationship.
+
+
+

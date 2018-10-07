@@ -12,49 +12,7 @@ Another dynamic and heterogeneous dataset we use in our experiments is the Delic
 \subsubsection{MovieLens}
 The third heterogeneous dataset with dynamic characteristics has been extracted from MovieLens personalized movie recommendation website, provided by \cite{harper2015}. The dataset comprises seven types of objects, that are users, movies, tags, genres, actors, directors, and countries, as illustrated by the network schema in the Fig.~\ref{fig:schema:movielens}. It contains about 1.4k users and 5.6k movies, with user-movie rating timestamps ranging from September 1997 to January 2009.
 
-The demographic statistics of the datasets is presented in Table~\ref{table:dataset}.
-
-%\begin{table}[t]
-%	\centering
-%	\caption{Demographic Statistics of Real-World Datasets}
-%	\label{table:dataset}
-%	\scriptsize
-%	\begin{tabular} {l l l c c c c c c c}
-%		\toprule
-%		Dataset & Time Span & Entity & \multicolumn{7}{c}{Count}\\
-%		\midrule % In-table horizontal line
-%		\multirow{4}{*}{DBLP} & \multirow{4}{2cm}{From 1969 to 2016}
-%		& \multirow{2}{*}{Nodes}
-%		& $Author$ & $Paper$ & $Venue$ & $Term$ & & & \\
-%		& & & 15,929 & 37,077 & 38 & 12,028 & & & \\ % Content row 3
-%		\cmidrule{3-10}
-%		& & \multirow{2}{*}{Links}
-%		&  write & cite & publish & mention & & & \\
-%		& & & 100,797 & 165,904 & 42,872 & 284,156 & & & \\ % Content row 3
-%
-%		\midrule % In-table horizontal line
-%		\multirow{4}{*}{Delicious} & \multirow{4}{2cm}{From May 2006 to Oct 2010}
-%		& \multirow{2}{*}{Nodes}
-%		& $User$ & $Tag$ & $Bookmark$ & & & & \\
-%		& & & 1,714 & 21,956 & 30,998 & & & &  \\ % Content row 3
-%		\cmidrule{3-10}
-%		& & \multirow{2}{*}{Links}
-%		& contact & post & has-tag & & & & \\
-%		& & & 15,329 & 437,594 & 437,594 & & & & \\
-%		
-%		\midrule % In-table horizontal line
-%		\multirow{4}{*}{MovieLens} & \multirow{4}{2cm}{From Sep 1997 to Jan 2009}
-%		& \multirow{2}{*}{Nodes}
-%		& $User$ & $Movie$ & $Actor$ & $Director$ & $Genre$ & $Tag$ & $Country$ \\
-%		& & & 1,421 & 5,660 & 6,176 & 2,401 & 19 & 5,561 & 63 \\ % Content row 3
-%		\cmidrule{3-10}
-%		& & \multirow{2}{*}{Links}
-%		& rate & play-in & direct & has-genre & has-tag & produced-in & \\
-%		& & & 855,599 & 231,743 & 10,156 & 20,810 & 47,958 & 10,198 & \\
-%
-%		\bottomrule % Bottom horizontal line
-%	\end{tabular}
-%\end{table}
+The demographic statistics of all datasets are presented in Table~\ref{table:dataset}.
 
 
 \begin{table}[t]
@@ -103,7 +61,19 @@ The demographic statistics of the datasets is presented in Table~\ref{table:data
 
 \subsection{Experiment Settings}
 \subsubsection{Comparison Methods}
-To challenge the performance of \npglm, we use state-of-the-art GLM-based framework proposed in \cite{sun2012will} with Exponential, Rayleigh, and Weibull as distributions with different shapes, denoted as \textsc{Exp-Glm}, \textsc{Ray-Glm}, and \textsc{Wbl-Glm}, respectively. To examine the effect of considering the dynamicity of the network on performance of the models, we evaluate each one with two different feature sets: \emph{dynamic} and \emph{static}. Dynamic feature set is extracted using our proposed feature extraction framework and captures the dynamicity of the network. On the contrary, static feature set only uses the very last snapshot of the network just before the beginning of the observation window, failing to reflect its temporal dynamics. For all models, we consider the median of the distribution $f_T(t\mid\mb{x}_{test})$ as the predicted time for any test sample and then compare it to the ground truth time $t_{test}$.
+To challenge the performance of \npglm, we use state-of-the-art GLM-based framework proposed in \cite{sun2012will} with Exponential, Rayleigh, and Weibull as distributions with different shapes, denoted as \textsc{Exp-Glm}, \textsc{Ray-Glm}, and \textsc{Wbl-Glm}, respectively. For all models, we consider the median of the distribution $f_T(t\mid\mb{x}_{test})$ as the predicted time for any test sample and then compare it to the ground truth time $t_{test}$.
+
+{\color{red}To examine the effect of considering different feature extractors on the performance of the models, we use a another dynamic feature extractor and a static one against our proposed LSTM Autoencoder:
+\begin{itemize}
+\item \emph{Exponential Smoothing}: This dynamic feature extractor previously used in \cite{hajibagheri2016leveraging} is an exponentially weighted moving average over the features extracted in all the snapshots of the network, which is calculated as:
+\[\mb{f}^i=\begin{cases} 
+\mb{x}^1, & \text{if}\quad i=1 \\
+\alpha\mb{x}^i+(1-\alpha)\mb{f}^{i-1}, & \text{otherwise}
+\end{cases}\]
+where $\mb{f}^i$ is the smoothed feature after $i$th snapshot, $\mb{x}^i$ is the $i$th step of the dynamic meta-path-based time series, and $\alpha\in(0,1)$ is the smoothing factor. We then set $\mb{x}=\mb{f}^k$ as the final feature vector if we have $k$ snapshots in total.
+\item \emph{Single Snapshot}: This static feature extractor considers the whole network as a single snapshot, neglecting its temporal dynamics. This feature extractor is equivalent to the one proposed in \cite{sun2012will}.
+\end{itemize}}
+
 \subsubsection{Performance Measures}
 We assess different methods using a number of evaluation metrics which are described in the following:
 \begin{itemize}
@@ -114,30 +84,32 @@ We assess different methods using a number of evaluation metrics which are descr
 \item Root Mean Squared Error (RMSE): This metric computes the root of the expected squared error between the predicted time values and the ground truth:
 \[RMSE(\mb{t},\hat{\mb{t}}) = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(t_i-\hat{t}_i\right)^2}\]
 \item Mean Squared Logarithmic Error (MSLE): This measures the expected value of the squared logarithmic error between the predicted time values and the ground truth:
-\[RMSE(\mb{t},\hat{\mb{t}}) = \frac{1}{N}\sum_{i=1}^{N}\left(\log{(1+t_i)}-log{(1+\hat{t}_i)}\right)^2\]
+\[MSLE(\mb{t},\hat{\mb{t}}) = \frac{1}{N}\sum_{i=1}^{N}\left(\log{(1+t_i)}-log{(1+\hat{t}_i)}\right)^2\]
 \item Median Absolute Error (MDAE): It is the median of the absolute errors between the predicted time values and the ground truth:
 \[MDAE(\mb{t},\hat{\mb{t}}) = median(\left|t_1-\hat{t}_1\right|\dots\left|t_N-\hat{t}_N\right|)\]
 \item Maximum Threshold Prediction Accuracy (ACC): This measures for what fraction of samples, a model have a lower absolute error than a given threshold:
 \[ACC(\mb{t},\hat{\mb{t}})=\frac{1}{N}\sum_{i=1}^{N}\mb{1}\left(\left|t_i-\hat{t}_i\right| < threshold\right)\]
-\item Concordance Index (CI): This metric is one of the most widely used performance measures for survival models that estimates how good a model performs at ranking predicted times \cite{harrell1982evaluating}. It can be seen as the fraction of all pairs of samples whose predicted times are correctly ordered among all samples that can be ordered, and is considered as the generalization of the Area Under Receiver Operating Characteristic Curve (AUC) when we are dealing with censored data \cite{steck2008ranking}.
+\item \color{red}Concordance Index (CI): This metric is one of the most widely used performance measures for survival models that estimates how good a model performs at ranking predicted times \cite{harrell1982evaluating}. It can be seen as the fraction of all pairs of samples whose predicted times are correctly ordered among all samples that can be ordered, and is considered as the generalization of the Area Under Receiver Operating Characteristic Curve (AUC) when we are dealing with censored data \cite{steck2008ranking}.
 \end{itemize}
 
 %We use 5-fold cross-validation and report the average results for all the experiments in this section. 
 \subsubsection{Experiment Setup}
 
 
-For DBLP dataset, we confine the data samples to those authors who have published more than 5 papers in the feature extraction window of each experiment. Following the triple building blocks described for feature extraction in Section~\ref{sec:features}, and using the similarity meta-paths in Table~\ref{table:meta}, we start the feature extraction process with 19 meta-paths. In all experiments, the author citation relation ($A\rightarrow P\rightarrow P\leftarrow A$) is chosen as the target relation. 
-For the case of Delicious dataset, we select user-user relation ($U\leftrightarrow U$) as the target relation, and design 6 meta-paths via the similarity meta-paths in Table~\ref{table:meta}.
+For DBLP dataset, we confine the data samples to those authors who have published more than 5 papers in the feature extraction window of each experiment. Following the triple building blocks described for feature extraction in Section~\ref{sec:features}, and using the similarity meta-paths in Table~\ref{table:meta}, we start the feature extraction process with 19 feature meta-paths. In all experiments, the author citation relation ($A\rightarrow P\rightarrow P\leftarrow A$) is chosen as the target relation. 
+For the case of Delicious dataset, we select user-user relation ($U\leftrightarrow U$) as the target relation, and design 6 feature meta-paths via the similarity meta-paths in Table~\ref{table:meta}.
 Regarding the MovieLens dataset, we limit the actor list to the top three for each movie. To imply a notion of ``like'' relation between user and movie, we only consider ratings above 4 in scale of 5. For this dataset, the target relation is set to user rate movie ($U\rightarrow M$), based on which, we design 11 final meta-paths. For the sake of convenience, we convert the scale of time differences from timestamp to month in Delicious and MovieLens datasets.
 
-We implemented the LSTM autoencoder using Keras deep learning library \cite{chollet2015keras}. We used mean square error loss function and Adadelta optimizer \cite{zeiler2012adadelta} with default parameters. For all datasets, we set the dimension of the encoded feature as twice as the input dimension. For Np-Glm the data samples were ordered according to their corresponding time variables, as the model needs the samples sorted by their recorded time. In all experiments, we pick an equal number of censored samples as the observed ones, uniformly at random. We use 5-fold cross-validation and report the average results for all the experiments in this section.
+{\color{red}Except for parameter settings analysis (subsection~\ref{sec:param-analysis}) where we will analyze the effect of different parameters on the performance of different models, in the rest of the experiments in this section we set the length of the observation window $\Omega$ to 6 for all three datasets. For DBLP dataset, the number of snapshots $k$ is set to 6, while for the other two datasets we set $k=12$. We also fix the time difference between network snapshots $\Delta$ to 1 in all cases. These settings lead to have a feature extraction window of size $\Phi=6$ years for DBLP, and $\Phi=12$ months for Delicious and MovieLens. Accordingly, the number of labeled instances for DBLP, Delicious, and MovieLens are about 3.4K, 3.9K, and 7.8K, respectively. About half of the labeled samples are censored ones, which are picked uniformly at random among all the possible candidates.}
+
+We implemented the LSTM autoencoder using Keras deep learning library \cite{chollet2015keras}. We used mean square error loss function, linear activation function, and Adadelta optimizer \cite{zeiler2012adadelta} with default parameters. For all datasets, we set the dimension of the encoded feature as twice as the input dimension, and trained the autoencoder in 50 epochs. For exponential smoothing feature extractor, the smoothing factor $\alpha$ were tuned to maximize the performance on the training dataset. For Np-Glm, the data samples were ordered according to their corresponding time variables, as the model needs the samples sorted by their recorded time. We use 5-fold cross-validation and report the average results for all the experiments in this section.
 
 \subsection{Experiment Results}
-In the rest of this section, we first assess how well different methods perform on various datasets and compare their performance based on different measures. Next, we analyze the effect of different parameters and problem configurations on the performance of competitive methods.
+In the rest of this section, we first assess how well different methods perform over various datasets and compare their performance based on different measures. Next, we discuss the efficiency of our proposed method by measuring and comparing its running time against the other baselines. Finally, we analyze the effect of different parameters and problem configurations on the performance of competitive methods.
 
 \begin{table}[t]
 	\centering
-	\caption{Performance Comparison of Different Methods on Different Datasets}
+	\caption{Comprehensive Performance Comparison of Different Methods}
 	\label{table:results}
 	\footnotesize
 	\begin{tabu} to \columnwidth {c c l r r r r r r}
@@ -146,45 +118,66 @@ In the rest of this section, we first assess how well different methods perform 
 		Dataset & Feature &
 		Model &  MAE &   MRE &   RMSE &   MSLE &   MDAE &  CI \\
 		\midrule
-		\multirow{8}{*}{\rotatebox{90}{DBLP}}
-		& \multirow{4}{*}{\rotatebox{90}{Dynamic}}
+		\multirow{8}{*}[-3em]{\rotatebox{90}{DBLP}}
+		& \multirow{4}{*}{\shortstack{Dynamic\\(LSTM Autoencoder)}}
 		& \npglm  &  $\bm{1.99}$ &  $\bm{0.95}$ &   $\bm{2.43}$ &   $\bm{0.30}$ &  $\bm{1.73}$ & $\bm{0.62}$ \\
 		& & \textsc{Wbl-Glm} &  2.33 &  1.10 &   2.85 &   0.36 &   2.08 & 0.58 \\
 		& & \textsc{Exp-Glm} &  3.11 &  1.39 &   3.88 &   0.52 &   2.58 & 0.50 \\
 		& & \textsc{Ray-Glm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
 		
 		\cmidrule{2-9}                                                                            
-		& \multirow{4}{*}{\rotatebox{90}{Static}}                                                  
+		& \multirow{4}{*}{\shortstack{Dynamic\\(Exp. Smoothing)}}
+		& \npglm               &  2.15 &  1.07  &  2.54  &  0.32  &  1.98 & 0.53 \\
+		& & \textsc{Wbl-Glm}     &  2.50 &  1.22 &   2.89  &  0.38  &  2.46 & 0.58 \\
+		& & \textsc{Exp-Glm}     &  3.20 &  1.49  &  3.73  &  0.51  &  3.06&  0.45 \\
+		& & \textsc{Ray-Glm}     &  4.50  & 2.07 &   4.90   & 0.75   & 4.62 & 0.19 \\
+		
+		\cmidrule{2-9}                                                                            
+		& \multirow{4}{*}{\shortstack{Static\\(Single Snapshot)}}                                                  
 		& \npglm               &  2.76 &  1.35 &   3.07 &   0.44 &   2.88 & 0.50 \\
 		& & \textsc{Wbl-Glm}     &  2.81 &  1.38 &   3.16 &   0.45 &   2.88 & 0.48 \\
 		& & \textsc{Exp-Glm}     &  3.28 &  1.57 &   3.70 &   0.53 &   3.30 & 0.14 \\
 		& & \textsc{Ray-Glm}     &  5.04 &  2.28 &   5.26 &   0.85 &   5.12 & 0.01 \\
 		
 		\midrule
-		\multirow{8}{*}{\rotatebox{90}{Delicious}}
-		& \multirow{4}{*}{\rotatebox{90}{Dynamic}}
+		\multirow{8}{*}[-3em]{\rotatebox{90}{Delicious}}
+		& \multirow{4}{*}{\shortstack{Dynamic\\(LSTM Autoencoder)}}
 		& \npglm  &  $\bm{2.10}$ &  $\bm{1.20}$ &   $\bm{2.55}$ &   $\bm{0.35}$ &   $\bm{2.05}$ & $\bm{0.70}$ \\
 		& & \textsc{Wbl-Glm} &  2.37 &  1.31 &   2.89 &   0.40 &   2.16 & 0.57 \\
 		& & \textsc{Exp-Glm} &  3.21 &  1.58 &   3.84 &   0.54 &   2.89 & 0.55 \\
 		& & \textsc{Ray-Glm} &  3.90 &  2.07 &   4.66 &   0.68 &   3.91 & 0.40 \\
 		
 		\cmidrule{2-9}                 
-		& \multirow{4}{*}{\rotatebox{90}{Static}}                                                  
+		& \multirow{4}{*}{\shortstack{Dynamic\\(Exp. Smoothing)}}                                                  
+		& \npglm               &  2.25  & 1.36  &  2.74  &  0.40  &  2.11 & 0.66 \\
+		& & \textsc{Wbl-Glm}     &  2.61  & 1.64  &  3.20 &   0.47   & 2.17 & 0.56 \\
+		& & \textsc{Exp-Glm}     &  3.52  & 1.99  &  4.54  &  0.62  &  3.20  &0.39 \\
+		& & \textsc{Ray-Glm}     &  4.68 &  2.62 &   5.24   & 0.84 &   4.37  &0.19 \\
+		
+		\cmidrule{2-9}                 
+		& \multirow{4}{*}{\shortstack{Static\\(Single Snapshot)}}                                                  
 		& \npglm               &  2.33 &  1.46 &   2.80 &   0.41 &   2.17 & 0.61 \\
 		& & \textsc{Wbl-Glm}     &  2.65 &  1.62 &   3.23 &   0.47 &   2.26 & 0.43 \\
 		& & \textsc{Exp-Glm}     &  3.35 &  1.91 &   4.17 &   0.59 &   2.75 & 0.35 \\
 		& & \textsc{Ray-Glm}     &  4.81 &  2.61 &   5.27 &   0.85 &   4.28 & 0.12 \\
 		
 		\midrule
-		\multirow{8}{*}{\rotatebox{90}{MovieLens}}
-		& \multirow{4}{*}{\rotatebox{90}{Dynamic}}
+		\multirow{8}{*}[-3em]{\rotatebox{90}{MovieLens}}
+		& \multirow{4}{*}{\shortstack{Dynamic\\(LSTM Autoencoder)}}
 		& \npglm  &  $\bm{2.48}$ &  $\bm{3.08}$ &   $\bm{3.04}$ &   $\bm{0.55}$ &  $\bm{2.14}$ & $\bm{0.70}$ \\
 		& & \textsc{Wbl-Glm} &  3.06 &  3.61 &   3.79 &   0.65 &   2.60 & 0.56 \\
 		& & \textsc{Exp-Glm} &  3.79 &  2.70 &   4.60 &   0.78 &   3.48 & 0.45 \\
 		& & \textsc{Ray-Glm} &  4.98 &  3.58 &   5.63 &   1.05 &   4.83 & 0.33 \\
 		
 		\cmidrule{2-9}                                                                            
-		& \multirow{4}{*}{\rotatebox{90}{Static}}                                                  
+		& \multirow{4}{*}{\shortstack{Dynamic\\(Exp. Smoothing)}}                                                  
+		& \npglm               &  2.69 &  3.35  &  3.18  &  0.59  &  2.61  &0.66 \\
+		& & \textsc{Wbl-Glm}     &  3.09&   3.62 &   3.59 &   0.66 &   2.95 & 0.52 \\
+		& & \textsc{Exp-Glm}     &  3.52 &  2.86  &  4.05  &  0.74  &  3.26 & 0.43 \\
+		& & \textsc{Ray-Glm}     &  5.01  & 3.88   & 5.46   & 1.06   & 4.99 & 0.22 \\
+		
+		\cmidrule{2-9}                                                                            
+		& \multirow{4}{*}{\shortstack{Static\\(Single Snapshot)}}                                                  
 		& \npglm               &  2.92 &  3.44 &   3.45 &   0.67 &   3.36 & 0.50 \\
 		& & \textsc{Wbl-Glm}     &  2.99 &  3.52 &   3.51 &   0.69 &   3.37 & 0.49 \\
 		& & \textsc{Exp-Glm}     &  3.42 &  2.89 &   3.86 &   0.78 &   3.82 & 0.49 \\
@@ -614,16 +607,47 @@ In the rest of this section, we first assess how well different methods perform 
 \end{figure}
 
 \subsubsection{Comparative Performance Analysis}
-In the first set of experiments, we evaluate the prediction power of different models on DBLP, Delicious and MovieLens datasets. In order to obtain comparable results, we set the length of the observation window $\Omega$ to 6 in all the experiments performed over all three datasets. For DBLP dataset, the number of snapshots $k$ was set to 6 years, while for the other two datasets we set $k=12$ months. We also fix the time difference between network snapshots $\Delta$ to 1 in all cases. MAE, MRE, RMSE, MSLE, MDAE and CI of all models using both dynamic and static feature sets has been shown in Table~\ref{table:results}. We see that in all three networks, \npglm using the dynamic features is superior to the other models under all performance measures. For instance, our model \npglm can obtain an MAE of 1.99 for DBLP dataset, which is 15\% lower than the MAE obtained by its closest competitor, \textsc{Wbl-Glm}. As of CI, \npglm achieves 0.62 on DBLP, which is 7\% better than \textsc{Wbl-Glm}. 
-On Delicious dataset, \npglm improves MAE and CI by 11\% and 23\%, respectively, relative to \textsc{Wbl-Glm}. Similarly, \npglm reduces MAE by 19\% and increases CI by 25\%. Comparable results hold for other performance measures as well. Accordingly, \textsc{Wbl-Glm}, which has two degrees of freedom, has shown a better performance compared to the other two ``fixed-shape'' models, namely \textsc{Exp-Glm} and \textsc{Ray-Glm}. That is while \npglm, as a non-parametric model with highly tunable shape, outperforms all the other ``less-flexible'' models by learning the true distribution of the data.
+In the first set of experiments, we evaluate the prediction power of different models combined with different feature extractors on DBLP, Delicious and MovieLens datasets. MAE, MRE, RMSE, MSLE, MDAE and CI of all models using both dynamic and static feature sets has been shown in Table~\ref{table:results}. We see that in all three networks, \npglm with the LSTM Autoencoder feature set is superior to the other methods under all performance measures. For instance, our model \npglm can obtain an MAE of 1.99 for DBLP dataset, which is 15\% lower than the MAE obtained by its closest competitor, \textsc{Wbl-Glm}. As of CI, \npglm achieves 0.62 on DBLP, which is 7\% better than \textsc{Wbl-Glm}. On Delicious dataset, \npglm improves MAE and CI by 11\% and 23\%, respectively, relative to \textsc{Wbl-Glm}. Similarly, \npglm reduces MAE by 19\% and increases CI by 25\%. Comparable results hold for other performance measures as well. Accordingly, \textsc{Wbl-Glm}, which has two degrees of freedom, has shown a better performance compared to the other two ``fixed-shape'' models, namely \textsc{Exp-Glm} and \textsc{Ray-Glm}. That is while \npglm, as a non-parametric model with highly tunable shape, outperforms all the other ``less-flexible'' models by learning the true distribution of the data.
 
-Moreover in Table~\ref{table:results}, it is evident that using the dynamic features, which are learned using the LSTM autoencoder, has a positive impact on the performance of all models over different datasets. In DBLP, using dynamic features results in achieving 28\% less MAE and 24\% more CI with \npglm. Over Delicious, \npglm with dynamic features reduces MAE by about 10\% and improves CI by 15\%. Finally on MovieLens dataset, combining dynamic features and \npglm lead to an improvement of 15\% and 40\% under MAE and CI, respectively. The other models behave more or less similarly when they are combined with dynamic features. This result clearly demonstrates that our feature extraction framework is performing well on capturing the temporal dynamics of the networks.
+{\color{red}Moreover in Table~\ref{table:results}, it is evident that using the dynamic features learned using the LSTM autoencoder has boosted the performance of all models over different datasets, and has outperformed the other feature extractors. Looking into the results presented in Table~\ref{table:results}, the other dynamic feature extractor, exponential smoothing, has performed better than the static single snapshot feature extractor, yet not better than our own LSTM Autoencoder. Comparing LSTM Autoencoder with exponential smoothing feature extractor, over the DBLP dataset, our proposed feature extractor achieved 7\% less MAE and 17\% more CI with \npglm. Over Delicious, \npglm with LSTM-based features reduces MAE by about 7\% and improves CI by 7\%. Finally on MovieLens dataset, combining LSTM Autoencoder and \npglm lead to an improvement of 8\% and 7\% under MAE and CI, respectively. The other models behave more or less similarly when they are combined with different feature extractors. This result clearly demonstrates that our feature extraction framework is performing well on capturing the temporal dynamics of the networks.}
 
-In the next experiment, we investigate the performance of different methods using the dynamic feature set under maximum threshold prediction accuracy. In other words, to evaluate the prediction accuracy of a model, we record the fraction of test samples for which the difference between their true times and predicted ones are lower than a given threshold, called \emph{tolerated error}. The parameter settings for feature extraction is the same as the configuration of the previous experiment ($\Delta=1$, $\Omega=6$, and $k=6$ for DBLP and $k=12$ otherwise). The results are plotted in Fig.~\ref{fig:real} where we varied the tolerated error in the range $\{0.5, 1.0, \dots, 3.0\}$. We can see from the figure that \npglm and \textsc{Wbl-Glm} perform comparably, yet \npglm outperforms \textsc{Wbl-Glm} in all cases. For example on MovieLens dataset (Fig.~\ref{fig:real:movielens}), \npglm can predict the relationship building time of all the test samples with 100\% accuracy by an error of 3 months, whereas for \textsc{Wbl-Glm}, this is reduced to 90\%. Similarly on Delicious dataset, \npglm with 3 months of tolerated error achieves around 80\% accuracy, which is about 12\% more than \textsc{Wbl-Glm}.
+In the next experiment, we investigated the performance of different models using the LSTM autoencoder feature extraction framework under maximum threshold prediction accuracy. To evaluate the prediction accuracy of a model, we record the fraction of test samples for which the difference between their true times and predicted ones are lower than a given threshold, called \emph{tolerated error}. The results are plotted in Fig.~\ref{fig:real} where we varied the tolerated error in the range $\{0.5, 1.0, \dots, 3.0\}$. We can see from the figure that \npglm and \textsc{Wbl-Glm} perform comparably, yet \npglm outperforms \textsc{Wbl-Glm} in all cases. For example on MovieLens dataset (Fig.~\ref{fig:real:movielens}), \npglm can predict the relationship building time of all the test samples with 100\% accuracy by an error of 3 months, whereas for \textsc{Wbl-Glm}, this is reduced to 90\%. Similarly on Delicious dataset, \npglm with 3 months of tolerated error achieves around 80\% accuracy, which is about 12\% more than \textsc{Wbl-Glm}.
 
+{\color{red}
+\subsubsection{Efficiency Analysis}
+In this part we analyze and compare the running time of \npglm and \textsc{Wbl-Glm} models utilizing different feature extractors, namely LSTM autoencoder, exponential smoothing, and single snapshot. All the algorithms were implemented in Python and were run on a Windows 10 PC with Intel Core i7 1.8 GHz CPU and 12GB of RAM. The full specification of the host machine is reported in Table~\ref{table:pc}. We measured the running time of all the methods during a complete training and test procedure, including feature extraction, learning, and inference. For exponential smoothing feature extractor, we included the time required for tuning the smoothing factor $\alpha$ using a separate validation set, while for LSTM based framework the training time of the autoencoder is counted toward total running time. Table~\ref{table:efficiency} presents the results on each of the DBLP, Delicious, and MovieLens datasets. Since a considerable amount of running time is spent on feature extraction, dynamic feature extraction frameworks require more time to process the network data as opposed to static single snapshot feature extractor. However, our proposed LSTM autoencoder performs comparably to exponential smoothing in terms of running time. Even though LSTM autoencoder is a bit slower than the other dynamic feature extractor, it demonstrates higher prediction performance compared to models utilizing exponential smoothing. For example, on MovieLens network with more than 20K nodes and 1 million links, \npglm with LSTM autoencoder requires less than four minutes to process the whole network, extract features and learn from about 6K labeled samples, and perform prediction for about 2K instances on a typical PC.
+}
 
-\subsubsection{Parameter Setting Analysis.}
-The performance of different models is influenced by two parameters, the number of snapshots $k$, and the time difference between snapshots $\Delta$, as these parameters determine the length of the feature extraction window $\Phi$. In this set of experiments, we investigate how these parameters affect the performance of our model \npglm and its closest competitor \textsc{Wbl-Glm} on Delicious and MovieLens datasets. 
+\begin{table}[t]
+	\centering
+	\caption{Comparison of Computational Time Measured in Seconds}
+	\label{table:efficiency}
+	\footnotesize
+	\begin{tabu} to \columnwidth {c c c c c}
+		\toprule
+		%\cmidrule(l){2-3} \cmidrule{5-7}
+		\multirow{2}{*}{Dataset} & \multirow{2}{*}{Model} &
+		\multicolumn{3}{c}{Feature Extractor} \\
+		\cmidrule{3-5}
+		& & Single Snapshot & Exp. Smoothing & LSTM Autoencoder\\
+		
+		\midrule
+		\multirow{2}{*}{DBLP} & \npglm  &  35.92 &  98.35 &   93.59\\
+							  & \textsc{Wbl-Glm} &  36.01 &  74.34 &   79.83 \\
+		
+		\midrule
+		\multirow{2}{*}{Delicious} & \npglm  &  2.01 & 110.67 &   128.43\\
+		& \textsc{Wbl-Glm} &  1.89 &  97.44 &   123.53 \\
+		
+		\midrule
+		\multirow{2}{*}{MovieLens} & \npglm  &  19.60 &  177.015 &   232.77\\
+		& \textsc{Wbl-Glm} &  19.70 &  154.86 &   213.7\\
+		\bottomrule
+	\end{tabu}
+\end{table}
+
+\subsubsection{Parameter Setting Analysis}\label{sec:param-analysis}
+The performance of different models is influenced by two parameters, the number of snapshots $k$, and the time difference between snapshots $\Delta$, as these parameters determine the length of the feature extraction window $\Phi$. In this set of experiments, we investigate how these parameters affect the performance of our model \npglm and its closest competitor \textsc{Wbl-Glm} over Delicious and MovieLens datasets using the proposed LSTM based feature extraction framework. 
 
 Firstly, The effect of increasing the number of snapshots on achieved MAE and CI by \npglm and \textsc{Wbl-Glm} over Delicious and MovieLens datasets is illustrated in Fig.~\ref{fig:snaps:delicious} and Fig.~\ref{fig:snaps:MovieLens}, respectively. For both datasets, we set $\Delta=1.5$ and $\Omega=18$ and varied the number of snapshots in the range of 3 to 18. As we can see in both figures, increasing the number of snapshots results in lower prediction error and higher accuracy. This is due to the fact that as the number of snapshots grows, a longer history of the network is taken into account. Therefore, different models can benefit from more information about the temporal dynamics of the network given to them through the extracted feature vector.
 

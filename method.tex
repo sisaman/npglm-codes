@@ -1,54 +1,54 @@
 \begin{table*}
-	%\renewcommand{\arraystretch}{2}
-	\centering
-	\caption{Characteristics of Some Probability Distributions Used for Event-Time Modeling}
-	\label{table:dists}
-	\footnotesize
-	\begin{tabu} to \textwidth {X X[c] X[c] X[c] X[c]}
-		\toprule
-		Distribution & Density function & Survival function & Intensity function & Cumulative intensity\\
-		& $f_T(t)$ & $S(t)$ & $\lambda(t)$ & $\Lambda(t)$\\[1pt]
-		\midrule % In-table horizontal line
-		Exponential & $\alpha\exp(-\alpha t)$ & $\exp(-\alpha t)$ & $\alpha$ & $\alpha t$\\[4pt]
-		%\midrule
-		Rayleigh & $\frac{t}{\sigma^2}\exp(-\frac{t^2}{2\sigma^2})$ & $\exp(-\frac{t^2}{2\sigma^2})$ & $\frac{t}{\sigma^2}$ & $\frac{t^2}{2\sigma^2}$\\[4pt]
-		%\midrule % In-table horizontal line
-		Gompertz & $\alpha e^t\exp\left\lbrace -\alpha(e^t-1) \right\rbrace$ & $\exp\left\lbrace -\alpha(e^t-1) \right\rbrace$ & $\alpha e^t$ & $\alpha e^t$\\[4pt]
-		Weibull & $\frac{\alpha t^{\alpha-1}}{\beta^\alpha}\exp\left\lbrace-(\frac{t}{\beta})^\alpha\right\rbrace$ & $\exp\left\lbrace-(\frac{t}{\beta})^\alpha\right\rbrace$ & $\frac{\alpha t^{\alpha-1}}{\beta^\alpha}$ & $(\frac{t}{\beta})^\alpha$\\[2pt]
-		%\midrule % In-table horizontal line
-		%Power-Law & $\frac{\alpha\beta^\alpha}{t^{\alpha+1}}$ & $\left(\frac{\beta}{t}\right)^\alpha$ & $\frac{\alpha}{t}$ & $\alpha\ln(t)$\\
-		\bottomrule % Bottom horizontal line
-	\end{tabu}
+    %\renewcommand{\arraystretch}{2}
+    \centering
+    \caption{Characteristics of Some Probability Distributions Used for Event-Time Modeling}
+    \label{table:dists}
+    \footnotesize
+    \begin{tabu} to \textwidth {X X[c] X[c] X[c] X[c]}
+        \toprule
+        Distribution & Density function & Survival function & Intensity function & Cumulative intensity\\
+        & $f_T(t)$ & $S(t)$ & $\lambda(t)$ & $\Lambda(t)$\\[1pt]
+        \midrule % In-table horizontal line
+        Exponential & $\alpha\exp(-\alpha t)$ & $\exp(-\alpha t)$ & $\alpha$ & $\alpha t$\\[4pt]
+        %\midrule
+        Rayleigh & $\frac{t}{\sigma^2}\exp(-\frac{t^2}{2\sigma^2})$ & $\exp(-\frac{t^2}{2\sigma^2})$ & $\frac{t}{\sigma^2}$ & $\frac{t^2}{2\sigma^2}$\\[4pt]
+        %\midrule % In-table horizontal line
+        Gompertz & $\alpha e^t\exp\left\lbrace -\alpha(e^t-1) \right\rbrace$ & $\exp\left\lbrace -\alpha(e^t-1) \right\rbrace$ & $\alpha e^t$ & $\alpha e^t$\\[4pt]
+        Weibull & $\frac{\alpha t^{\alpha-1}}{\beta^\alpha}\exp\left\lbrace-(\frac{t}{\beta})^\alpha\right\rbrace$ & $\exp\left\lbrace-(\frac{t}{\beta})^\alpha\right\rbrace$ & $\frac{\alpha t^{\alpha-1}}{\beta^\alpha}$ & $(\frac{t}{\beta})^\alpha$\\[2pt]
+        %\midrule % In-table horizontal line
+        %Power-Law & $\frac{\alpha\beta^\alpha}{t^{\alpha+1}}$ & $\left(\frac{\beta}{t}\right)^\alpha$ & $\frac{\alpha}{t}$ & $\alpha\ln(t)$\\
+        \bottomrule % Bottom horizontal line
+    \end{tabu}
 \end{table*}
 
 \section{Supervised Non-Parametric Model}\label{sec:method}
 In this section we introduce our proposed model, called \emph{Non-Parametric Generalized Linear Model}, to solve the problem of continuous-time relationship prediction based on the extracted features. 
 Since the relationship building time is treated as a continuous random variable, we attempt to model the probability distribution of this time, given the features of the target relationship. Thus, if we denote the target relationship building time by $t$ and its features by $\mb{x}$, our aim is to model the probability density function $f_T(t\mid \mb{x})$. A conventional approach to modeling this function is to fix a parametric distribution for $t$ (e.g. Exponential distribution) and then relate $\mb{x}$ to $t$ using a Generalized Linear Model \cite{sun2012will}. The major drawback of this approach is that we need to know the exact distribution of the relationship building time, or at least, we could guess the best one that fits. The alternative way that we follow is to learn the shape of $f_T(t\mid \mb{x})$ from the data using a non-parametric solution.
 
-In the rest of this section, we first bring the necessary theoretical backgrounds related to the concept, then we go through the details of the proposed model. At the end, we explain the learning and inference algorithms of \npglm.
+In the rest of this section, we first bring the necessary theoretical backgrounds related to the concept, then we go through the details of the proposed model. In the end, we explain the learning and inference algorithms of \npglm.
 
 \subsection{Background}
 Here we define some essential concepts that are necessary to study before we proceed to the proposed model. Generally, the formation of a relationship between two nodes in a network can simply be considered as an event with its occurring time as a random variable $T$ coming from a density function $f_T(t)$. Regarding this, we can have the following definitions:
 
 \begin{definition}[Survival Function]
-	Given the density $f_T(t)$, the survival function denoted by $S(t)$, is the probability that an event occurs after a certain value of $t$, which means:
-	\begin{equation}
-	S(t) = P(T > t) = \int_t^\infty f_T(t)dt
-	\end{equation}
+    Given the density $f_T(t)$, the survival function denoted by $S(t)$, is the probability that an event occurs after a certain value of $t$, which means:
+    \begin{equation}
+    S(t) = P(T > t) = \int_t^\infty f_T(t)dt
+    \end{equation}
 \end{definition}
 
 \begin{definition}[Intensity Function]
-	The intensity function (or failure rate function), denoted by $\lambda(t)$, is the instantaneous rate of event occurring at any time $t$ given the fact that the event has not occurred yet:
-	\begin{equation}
-	\lambda(t)=\lim_{\Delta t\rightarrow 0}\frac{P(t\le T\le t+\Delta t\mid T\ge t)}{\Delta t}
-	\end{equation}
+    The intensity function (or failure rate function), denoted by $\lambda(t)$, is the instantaneous rate of event occurring at any time $t$ given the fact that the event has not occurred yet:
+    \begin{equation}
+    \lambda(t)=\lim_{\Delta t\rightarrow 0}\frac{P(t\le T\le t+\Delta t\mid T\ge t)}{\Delta t}
+    \end{equation}
 \end{definition}
 
 \begin{definition}[Cumulative Intensity Function]
-	The cumulative intensity function, denoted by $\Lambda(t)$, is the area under the intensity function up to a point $t$:
-	\begin{equation}\label{eq:Lambda}
-	\Lambda(t)=\int_0^t\lambda(t)dt
-	\end{equation}
+    The cumulative intensity function, denoted by $\Lambda(t)$, is the area under the intensity function up to a point $t$:
+    \begin{equation}\label{eq:Lambda}
+    \Lambda(t)=\int_0^t\lambda(t)dt
+    \end{equation}
 \end{definition}
 
 The relations between density, survival, and intensity functions come directly from their definitions as follows:
@@ -76,11 +76,11 @@ where $g$ is a function of $\mb{x}$ which captures the effect of features via a 
 \begin{equation}
 \prod_{i=1}^{N}f_T(t_i\mid \mb{x}_i)^{y_i}P(T\ge t_i\mid \mb{x}_i)^{1-y_i}\\
 \end{equation}
-The likelihood consists of the product of two parts: The first part is the contribution of those samples for which we have observed their exact building time, in terms of their density function. The second part on the other hand, is the contribution of the censored samples, for which we use the probability of the building time being greater than the recorded one. {\color{red}By applying Eq.~\ref{eq:reliability} and \ref{eq:density} we can write the likelihood in terms of the intensity function:
+The likelihood consists of the product of two parts: The first part is the contribution of those samples for which we have observed their exact building time, in terms of their density function. The second part on the other hand, is the contribution of the censored samples, for which we use the probability of the building time being greater than the recorded one. By applying Eq.~\ref{eq:reliability} and \ref{eq:density} we can write the likelihood in terms of the intensity function:
 \begin{equation}
 \prod_{i=1}^{N}\big[\lambda(t_i\mid x_i)\exp\{-\Lambda(t_i\mid x_i)\}\big]^{y_i}\exp\lbrace-\Lambda(t_i\mid x_i)\rbrace^{1-y_i}
 \end{equation}
-By merging the exponentials and applying Eq.~\ref{eq:Lambda} and \ref{eq:lambda}, the likelihood function becomes:}
+By merging the exponentials and applying Eq.~\ref{eq:Lambda} and \ref{eq:lambda}, the likelihood function becomes:
 \begin{equation}
 \prod_{i=1}^{N}\left[g(\mb{w}^T\mb{x}_i)h(t_i)\right]^{y_i}\exp\lbrace-g(\mb{w}^T\mb{x}_i)\int_{0}^{t_i}h(t)dt\rbrace
 \end{equation}
@@ -90,7 +90,7 @@ Since we don't know the form of $h(t)$, we cannot directly calculate the integra
 H(t_i)=\int_{0}^{t_i}h(t)dt \simeq \sum_{j=1}^{i}h(t_j)(t_j-t_{j-1})
 \end{equation}
 assuming samples are sorted by $t$ in increasing order, without loss of generality. The function $H(t)$ defined above plays an important role in both learning and inference phases. In fact, both the learning and inference phases rely on $H(t)$ instead of $h(t)$, which we will see later in this paper.
-Replacing the above series in the likelihood, taking the logarithm and negating, we end up with the following {\color{red}negative log-likelihood function, simply called the \emph{loss function}, denoted by $L$}:
+Replacing the above series in the likelihood, taking the logarithm and negating, we end up with the following negative log-likelihood function, simply called the \emph{loss function}, denoted by $L$:
 
 \begin{equation}\label{eq:logl}
 \begin{split}
@@ -118,32 +118,32 @@ which depends on the vector $\mb{w}$. On the other hand, we cannot obtain a clos
 \begin{equation}\label{eq:nlw}
 L(\mb{w})=\sum_{i=1}^{N}\left\lbrace\exp(\mb{w}^T\mb{x}_i)H(t_i)-y_i\mb{w}^T\mb{x}_i\right\rbrace + Const.
 \end{equation}
-which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depends on each other, they should be learned collectively. Here, we use an iterative algorithm to learn $\mb{w}$ and $H$ alternatively. We begin with a random vector $\mb{w}^{(0)}$. Then in each iteration $\tau$, we first update $H^{(\tau)}$ via Eq.~\ref{eq:H} using $w^{(\tau-1)}$. Next, we optimize Eq.~\ref{eq:nlw} using the values of $H^{(\tau)}(t_i)$ to obtain $\mb{w}^{(\tau)}$. We continue this routine until convergence. {\color{red}Since this procedure successively reduces the value of the loss function, and as the loss (negative log-likelihood) function is bounded from below, the algorithm will ultimately converge to a stationary point.} The pseudo code of the learning procedure is given in Algorithm~\ref{alg:learning}.
+which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depends on each other, they should be learned collectively. Here, we use an iterative algorithm to learn $\mb{w}$ and $H$ alternatively. We begin with a random vector $\mb{w}^{(0)}$. Then in each iteration $\tau$, we first update $H^{(\tau)}$ via Eq.~\ref{eq:H} using $w^{(\tau-1)}$. Next, we optimize Eq.~\ref{eq:nlw} using the values of $H^{(\tau)}(t_i)$ to obtain $\mb{w}^{(\tau)}$. We continue this routine until convergence. Since this procedure successively reduces the value of the loss function, and as the loss function (i.e. the negative log-likelihood) is bounded from below, the algorithm will ultimately converge to a stationary point. The pseudo code of the learning procedure is given in Algorithm~\ref{alg:learning}.
 
 \begin{algorithm}[t]
-	\small
-	\SetAlgoLined
-	\KwIn{$\mb{X}_{N\times d}=(\mb{x}_1,\dots\mb{x}_N)^T$ as $d$-dimensional feature vectors, $\mb{y}_{N\times1}$ as observation states, and $\mb{t}_{N\times1}$ as recorded times.}
-	\KwOut{Learned parameters $\mb{w}_{d\times1}$ and $\mb{H}_{N\times1}$.}
-	$converged\leftarrow False$\;
-	$threshold\leftarrow10^{-4}$\;
-	$\tau\leftarrow 0$\;
-	$L^{(\tau)}=\infty$\;
-	Initialize $\mb{w}^{(\tau)}$ with random values\;
-	\While{Not $converged$}{
-		$\tau\leftarrow\tau+1$\;
-		Use Eq.~\ref{eq:H} to obtain $\mb{H}^{(\tau)}$ using $\mb{w}^{(\tau-1)}$\;
-		Minimize Eq.~\ref{eq:nlw} to obtain $\mb{w}^{(\tau)}$ using $\mb{H}^{(\tau)}$\;
-		Use Eq.~\ref{eq:logl} to obtain $L^{(\tau)}$ using $\mb{w}^{(\tau)}$ and $\mb{H}^{(\tau)}$\;
-		
-		\If{$\left\|{L}^{(\tau)} - {L}^{(\tau-1)}\right\| < threshold$}{
-			$converged\leftarrow True$\;
-		}
-	}
-	$\mb{w}\leftarrow \mb{w}^{(\tau)}$\;
-	$\mb{H}\leftarrow \mb{H}^{(\tau)}$\;
-	\caption{The learning algorithm of \npglm}
-	\label{alg:learning}
+    \small
+    \SetAlgoLined
+    \KwIn{$\mb{X}_{N\times d}=(\mb{x}_1,\dots\mb{x}_N)^T$ as $d$-dimensional feature vectors, $\mb{y}_{N\times1}$ as observation states, and $\mb{t}_{N\times1}$ as recorded times.}
+    \KwOut{Learned parameters $\mb{w}_{d\times1}$ and $\mb{H}_{N\times1}$.}
+    $converged\leftarrow False$\;
+    $threshold\leftarrow10^{-4}$\;
+    $\tau\leftarrow 0$\;
+    $L^{(\tau)}=\infty$\;
+    Initialize $\mb{w}^{(\tau)}$ with random values\;
+    \While{Not $converged$}{
+        $\tau\leftarrow\tau+1$\;
+        Use Eq.~\ref{eq:H} to obtain $\mb{H}^{(\tau)}$ using $\mb{w}^{(\tau-1)}$\;
+        Minimize Eq.~\ref{eq:nlw} to obtain $\mb{w}^{(\tau)}$ using $\mb{H}^{(\tau)}$\;
+        Use Eq.~\ref{eq:logl} to obtain $L^{(\tau)}$ using $\mb{w}^{(\tau)}$ and $\mb{H}^{(\tau)}$\;
+        
+        \If{$\left\|{L}^{(\tau)} - {L}^{(\tau-1)}\right\| < threshold$}{
+            $converged\leftarrow True$\;
+        }
+    }
+    $\mb{w}\leftarrow \mb{w}^{(\tau)}$\;
+    $\mb{H}\leftarrow \mb{H}^{(\tau)}$\;
+    \caption{The learning algorithm of \npglm}
+    \label{alg:learning}
 \end{algorithm}
 
 %{\color{red}
@@ -163,10 +163,10 @@ which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depe
 %\end{proof}
 %
 %\begin{lemma}
-%	The loss function with respect to $h(t_k)$, $1\le k \le N$, is convex.
+%    The loss function with respect to $h(t_k)$, $1\le k \le N$, is convex.
 %\end{lemma}
 %\begin{proof}
-%	Taking the first partial derivative of the loss function with respect to $h(t_k)$ we get:
+%    Taking the first partial derivative of the loss function with respect to $h(t_k)$ we get:
 %\[\frac{\partial L}{\partial h(t_k)}=(t_k-t_{k-1})\sum_{i=k}^{N}\exp(w^Tx_i)-\frac{y_k}{h(t_k)}\]
 %Then for the second partial derivative we have:
 %\[\frac{\partial^2 L}{\partial h^2(t_k)}=\frac{y_k}{h^2(t_k)} \ge 0\]
@@ -206,7 +206,7 @@ which depends on the function $H$. As the learning of both $\mb{w}$ and $H$ depe
 
 
 \subsection{Inference Queries}
-In this part, we explain how to answer the common inference queries based on the inferred distribution $f_T(t\mid \mb{x})$. Suppose that we have learned the vector ${\mb{w}}$ and the function ${H}$ using the training samples $(\mb{x}_i, y_i, t_i),\ i=1\dots N$ following Algorithm~\ref{alg:learning}. Afterwards, for a testing relationship $R$ associated with a feature vector $\mb{x}_R$, the following queries can be answered:\\
+In this part, we explain how to answer the common inference queries based on the inferred distribution $f_T(t\mid \mb{x})$. Suppose that we have learned the vector ${\mb{w}}$ and the function ${H}$ using the training samples $(\mb{x}_i, y_i, t_i),\ i=1\dots N$ following Algorithm~\ref{alg:learning}. Afterward, for a testing relationship $R$ associated with a feature vector $\mb{x}_R$, the following queries can be answered:\\
 
 
 \subsubsection{Ranged Probability} What is the probability for the relationship $R$ to be formed between time $t_\alpha$ and $t_\beta$? This is equivalent to calculating $P(t_\alpha \le T \le t_\beta \mid \mb{x}_R)$, which by definition is:

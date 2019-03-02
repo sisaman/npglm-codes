@@ -61,7 +61,27 @@ The demographic statistics of all datasets are presented in Table~\ref{table:dat
 
 \subsection{Experiment Settings}
 \subsubsection{Comparison Methods}
-To challenge the performance of \npglm, we use state-of-the-art GLM-based framework proposed in \cite{sun2012will} with Exponential, Rayleigh, and Weibull as distributions with different shapes, denoted as \textsc{Exp-Glm}, \textsc{Ray-Glm}, and \textsc{Wbl-Glm}, respectively. For all models, we consider the median of the distribution $f_T(t\mid\mb{x}_{test})$ as the predicted time for any test sample and then compare it to the ground truth time $t_{test}$.
+To challenge the performance of \npglm, we use a number of baselines introduced in the following:
+
+\begin{itemize}\color{red}
+\item \emph{Generalized Linear Model (\textsc{Glm})}: This is the state-of-the-art method proposed in \cite{sun2012will}. We use the GLM-based framework with Exponential and Weibull distributions, denoted as \textsc{Exp-Glm} and \textsc{Wbl-Glm} used in \cite{sun2012will}.
+
+\item \emph{Censored Regression Model (\textsc{Crm})}: This model, also called type II Tobit model, is designed to estimate linear relationships between variables when there is censoring in the dependent variable. In other words, it is an extension to the ordinary least squares linear regression for cencored data \cite{tobit}. The structural equation in this model is:
+\[ t^*=\mb{w}^T\mb{x}+\epsilon \]
+where $\epsilon$ is a normally distributed error term and $t^*$ is a latent variable which is observed within the observation window and censored otherwise. Accordingly, the observed $t$ is defined as:
+\[ t=\begin{cases}
+t^* & \text{if}\quad y=1 \\
+\Omega & \text{if}\quad y=0\\
+\end{cases} \]
+The coefficient vector $\mb{w}$ is learned using maximum likelihood estimation (more details in \cite{amemiya1984tobit}).
+\item \emph{Additive Regression Model (\textsc{Arm})}: This model is another regression method suggested by Aalen for censored data \cite{aalen1989linear}. Like \npglm, it specifies the intensity function, but instead of a multiplicative linear model, the Aalen's model is additive:
+\[\lambda(t\mid \mb{x})=\sum_{i=0}^dw_i(t)x_i \]
+The learning algorithm infers $\int_{0}^{t}w_i(t)dt$ instead of estimating individual $w_i$s. 
+For more details about the learning algorithm, the reader can refer to \cite{hosmer2011applied}.
+
+\end{itemize}
+
+For all models, we consider the median of the distribution $f_T(t\mid\mb{x}_{test})$ as the predicted time for any test sample and then compare it to the ground truth time $t_{test}$.
 
 To examine the effect of considering different feature extractors on the performance of the models, we use another dynamic feature extractor and a static one against the proposed LSTM Autoencoder:
 \begin{itemize}
@@ -118,97 +138,99 @@ In the rest of this section, we first assess how well different methods perform 
         Dataset & Feature &
         Model &  MAE &   MRE &   RMSE &   MSLE &   MDAE &  CI \\
         \midrule
-        \multirow{18}{*}[-3em]{\rotatebox{90}{DBLP}}
+        \multirow{15}{*}[-3em]{\rotatebox{90}{DBLP}}
         & \multirow{6}{*}{\shortstack{LSTM Autoencoder\\(Dynamic)}}
         & \npglm  &  $\bm{1.99}$ &  $\bm{0.95}$ &   $\bm{2.43}$ &   $\bm{0.30}$ &  $\bm{1.73}$ & $\bm{0.62}$ \\
         & & \textsc{Wbl-Glm} &  2.33 &  1.10 &   2.85 &   0.36 &   2.08 & 0.58 \\
         & & \textsc{Exp-Glm} &  3.11 &  1.39 &   3.88 &   0.52 &   2.58 & 0.50 \\
-        % & & \textsc{Ray-Glm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+        & & \textsc{Crm} & 3.08 & 1.06 & 3.32 & 2.04 & 2.98 & 0.37 \\
+        & & \textsc{Arm} & 2.95 & 1.33 & 4.48 & 0.48 & 1.48 & 0.56 \\
+%        & & \textsc{Svr} & 2.61 & 1.32 & 2.90 & 0.42 & 2.80 & 0.58 \\
         
         \cmidrule{2-9}                                                                            
         & \multirow{6}{*}{\shortstack{Exp. Smoothing\\(Dynamic)}}
         & \npglm               &  2.15 &  1.07  &  2.54  &  0.32  &  1.98 & 0.53 \\
         & & \textsc{Wbl-Glm}     &  2.50 &  1.22 &   2.89  &  0.38  &  2.46 & 0.58 \\
         & & \textsc{Exp-Glm}     &  3.20 &  1.49  &  3.73  &  0.51  &  3.06&  0.45 \\
-        % & & \textsc{Ray-Glm}     &  4.50  & 2.07 &   4.90   & 0.75   & 4.62 & 0.19 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  4.50  & 2.07 &   4.90   & 0.75   & 4.62 & 0.19 \\
+        & & \textsc{Crm} & 2.55 & 0.97 & 3.05 & 1.58 & 2.11 & 0.55 \\
+        & & \textsc{Arm} & 6.75 & 2.83 & 7.86 & 1.17 & 6.39 & 0.60 \\
+%        & & \textsc{Svr} & 2.47 & 1.16 & 2.97 & 0.38 & 2.24 & 0.58 \\
+        
         
         \cmidrule{2-9}                                                                            
         & \multirow{6}{*}{\shortstack{Single Snapshot\\(Static)}}                                                  
         & \npglm               &  2.76 &  1.35 &   3.07 &   0.44 &   2.88 & 0.50 \\
         & & \textsc{Wbl-Glm}     &  2.81 &  1.38 &   3.16 &   0.45 &   2.88 & 0.48 \\
         & & \textsc{Exp-Glm}     &  3.28 &  1.57 &   3.70 &   0.53 &   3.30 & 0.14 \\
-        % & & \textsc{Ray-Glm}     &  5.04 &  2.28 &   5.26 &   0.85 &   5.12 & 0.01 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  5.04 &  2.28 &   5.26 &   0.85 &   5.12 & 0.01 \\
+        & & \textsc{Crm} & 2.96 & 1.03 & 3.21 & 1.73 & 2.97 & 0.38 \\
+        & & \textsc{Arm} & 3.89 & 1.76 & 5.45 & 0.66 & 2.11 & 0.46 \\
+        
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \midrule
-        \multirow{8}{*}[-3em]{\rotatebox{90}{Delicious}}
+        \multirow{15}{*}[-3em]{\rotatebox{90}{Delicious}}
         & \multirow{6}{*}{\shortstack{LSTM Autoencoder\\(Dynamic)}}
         & \npglm  &  $\bm{2.10}$ &  $\bm{1.20}$ &   $\bm{2.55}$ &   $\bm{0.35}$ &   $\bm{2.05}$ & $\bm{0.70}$ \\
         & & \textsc{Wbl-Glm} &  2.37 &  1.31 &   2.89 &   0.40 &   2.16 & 0.57 \\
         & & \textsc{Exp-Glm} &  3.21 &  1.58 &   3.84 &   0.54 &   2.89 & 0.55 \\
-        % & & \textsc{Ray-Glm} &  3.90 &  2.07 &   4.66 &   0.68 &   3.91 & 0.40 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm} &  3.90 &  2.07 &   4.66 &   0.68 &   3.91 & 0.40 \\
+        & & \textsc{Crm} & 6.38 & 3.10 & 6.55 & 1.33 & 6.87 & 0.43 \\
+        & & \textsc{Arm} & 5.20 & 2.56 & 6.23 & 0.86 & 4.99 & 0.52 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \cmidrule{2-9}                 
         & \multirow{6}{*}{\shortstack{Exp. Smoothing\\(Dynamic)}}                                                  
         & \npglm               &  2.25  & 1.36  &  2.74  &  0.40  &  2.11 & 0.66 \\
         & & \textsc{Wbl-Glm}     &  2.61  & 1.64  &  3.20 &   0.47   & 2.17 & 0.56 \\
         & & \textsc{Exp-Glm}     &  3.52  & 1.99  &  4.54  &  0.62  &  3.20  &0.39 \\
-        % & & \textsc{Ray-Glm}     &  4.68 &  2.62 &   5.24   & 0.84 &   4.37  &0.19 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  4.68 &  2.62 &   5.24   & 0.84 &   4.37  &0.19 \\
+        & & \textsc{Crm} & 3.28 & 3.69 & 3.84 & 2.07 & 2.88 & 0.43 \\
+        & & \textsc{Arm} & 6.36 & 3.24 & 7.80 & 1.09 & 6.72 & 0.56 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \cmidrule{2-9}                 
         & \multirow{6}{*}{\shortstack{Single Snapshot\\(Static)}}                                                  
         & \npglm               &  2.33 &  1.46 &   2.80 &   0.41 &   2.17 & 0.61 \\
         & & \textsc{Wbl-Glm}     &  2.65 &  1.62 &   3.23 &   0.47 &   2.26 & 0.43 \\
         & & \textsc{Exp-Glm}     &  3.35 &  1.91 &   4.17 &   0.59 &   2.75 & 0.35 \\
-        % & & \textsc{Ray-Glm}     &  4.81 &  2.61 &   5.27 &   0.85 &   4.28 & 0.12 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  4.81 &  2.61 &   5.27 &   0.85 &   4.28 & 0.12 \\
+        & & \textsc{Crm} & 3.06 & 2.05 & 3.47 & 1.53 & 2.84 & 0.38 \\
+        & & \textsc{Arm} & 5.79 & 2.76 & 6.69 & 1.16 & 5.89 & 0.37 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \midrule
-        \multirow{8}{*}[-3em]{\rotatebox{90}{MovieLens}}
+        \multirow{15}{*}[-3em]{\rotatebox{90}{MovieLens}}
         & \multirow{6}{*}{\shortstack{LSTM Autoencoder\\(Dynamic)}}
         & \npglm  &  $\bm{2.48}$ &  $\bm{3.08}$ &   $\bm{3.04}$ &   $\bm{0.55}$ &  $\bm{2.14}$ & $\bm{0.70}$ \\
         & & \textsc{Wbl-Glm} &  3.06 &  3.61 &   3.79 &   0.65 &   2.60 & 0.56 \\
         & & \textsc{Exp-Glm} &  3.79 &  2.70 &   4.60 &   0.78 &   3.48 & 0.45 \\
-        % & & \textsc{Ray-Glm} &  4.98 &  3.58 &   5.63 &   1.05 &   4.83 & 0.33 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm} &  4.98 &  3.58 &   5.63 &   1.05 &   4.83 & 0.33 \\
+        & & \textsc{Crm} & 3.07 & 3.47 & 3.74 & 2.02 & 2.51 & 0.40 \\
+        & & \textsc{Arm} & 5.53 & 5.63 & 7.41 & 1.12 & 3.80 & 0.53 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \cmidrule{2-9}                                                                            
         & \multirow{6}{*}{\shortstack{Exp. Smoothing\\(Dynamic)}}                                                  
         & \npglm               &  2.69 &  3.35  &  3.18  &  0.59  &  2.61  &0.66 \\
         & & \textsc{Wbl-Glm}     &  3.09&   3.62 &   3.59 &   0.66 &   2.95 & 0.52 \\
         & & \textsc{Exp-Glm}     &  3.52 &  2.86  &  4.05  &  0.74  &  3.26 & 0.43 \\
-        % & & \textsc{Ray-Glm}     &  5.01  & 3.88   & 5.46   & 1.06   & 4.99 & 0.22 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  5.01  & 3.88   & 5.46   & 1.06   & 4.99 & 0.22 \\
+        & & \textsc{Crm} & 3.18 & 3.37 & 3.68 & 1.90 & 2.56 & 0.48 \\
+        & & \textsc{Arm} & 9.39 & 8.60 & 10.06 & 1.83 & 9.26 & 0.52 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \cmidrule{2-9}                                                                            
         & \multirow{6}{*}{\shortstack{Single Snapshot\\(Static)}}                                                  
         & \npglm               &  2.92 &  3.44 &   3.45 &   0.67 &   3.36 & 0.50 \\
         & & \textsc{Wbl-Glm}     &  2.99 &  3.52 &   3.51 &   0.69 &   3.37 & 0.49 \\
         & & \textsc{Exp-Glm}     &  3.42 &  2.89 &   3.86 &   0.78 &   3.82 & 0.49 \\
-        % & & \textsc{Ray-Glm}     &  5.32 &  4.06 &   5.62 &   1.17 &   5.70 & 0.20 \\
-        & & \textsc{Tobit} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Adm} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
-        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
+%         & & \textsc{Ray-Glm}     &  5.32 &  4.06 &   5.62 &   1.17 &   5.70 & 0.20 \\
+        & & \textsc{Crm} & 3.14 & 3.48 & 3.63 & 2.20 & 3.55 & 0.35 \\
+        & & \textsc{Arm} & 5.71 & 5.50 & 7.30 & 1.23 & 5.18 & 0.47 \\
+%        & & \textsc{Svr} &  4.02 &  1.83 &   4.70 &   0.66 &   3.72 & 0.35 \\
         
         \bottomrule
     \end{tabu}
@@ -225,6 +247,7 @@ In the rest of this section, we first assess how well different methods perform 
         width=0.35\columnwidth,
         height=4.5cm,
         legend pos=north west,
+        legend image post style={scale=0.4},
         legend style={font=\tiny,nodes={scale=0.75, transform shape}},
         grid,
         y tick label style={
@@ -244,12 +267,12 @@ In the rest of this section, we first assess how well different methods perform 
         ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM, EXP-GLM, RAY-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}, \textsc{Crm}, \textsc{Arm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/db_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/db_wbl.txt};
-        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/db_exp.txt};
-        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/db_ray.txt};
+        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/db_tob.txt};
+        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/db_aam.txt};
         \end{axis}
         \end{tikzpicture}
     }
@@ -262,6 +285,7 @@ In the rest of this section, we first assess how well different methods perform 
         width=0.35\columnwidth,
         height=4.5cm,
         legend pos=north west,
+        legend image post style={scale=0.4},
         legend style={font=\tiny,nodes={scale=0.75, transform shape}},
         grid,
         y tick label style={
@@ -281,12 +305,12 @@ In the rest of this section, we first assess how well different methods perform 
         ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM, EXP-GLM, RAY-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}, \textsc{Crm}, \textsc{Arm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/dl_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/dl_wbl.txt};
-        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/dl_exp.txt};
-        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/dl_ray.txt};
+        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/dl_tob.txt};
+        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/dl_aam.txt};
         \end{axis}
         \end{tikzpicture}
     }
@@ -299,6 +323,7 @@ In the rest of this section, we first assess how well different methods perform 
         width=0.35\columnwidth,
         height=4.5cm,
         legend pos=north west,
+        legend image post style={scale=0.4},
         legend style={font=\tiny,nodes={scale=0.75, transform shape}},
         grid,
         y tick label style={
@@ -318,12 +343,12 @@ In the rest of this section, we first assess how well different methods perform 
         ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM, EXP-GLM, RAY-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}, \textsc{Crm}, \textsc{Arm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/mv_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/mv_wbl.txt};
-        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/mv_exp.txt};
-        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/mv_ray.txt};
+        \addplot[color=orange,mark=*,mark size=1.5,thick] table{results/mv_tob.txt};
+        \addplot[color=green,mark=diamond*,mark size=1.5,thick] table{results/mv_aam.txt};
         \end{axis}
         \end{tikzpicture}
     }
@@ -360,7 +385,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={3,6,...,18},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/dl_snap_mae_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/dl_snap_mae_wbl.txt};
@@ -395,7 +420,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={3,6,...,18},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/dl_snap_ci_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/dl_snap_ci_wbl.txt};
@@ -436,7 +461,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={3,6,...,18},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/mv_snap_mae_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/mv_snap_mae_wbl.txt};
@@ -471,7 +496,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={3,6,...,18},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/mv_snap_ci_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/mv_snap_ci_wbl.txt};
@@ -511,7 +536,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/delta_mae_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/delta_mae_wbl.txt};
@@ -546,7 +571,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/delta_ci_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/delta_ci_wbl.txt};
@@ -587,7 +612,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/mv_delta_mae_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/mv_delta_mae_wbl.txt};
@@ -622,7 +647,7 @@ In the rest of this section, we first assess how well different methods perform 
         %        ytick={0.1,0.2,...,0.9,1.0},
         xtick={0.5,1.0,...,3},
         %        restrict x to domain=0:900,
-        legend entries={NP-GLM, WBL-GLM},
+        legend entries={\npglm, \textsc{Wbl-Glm}},
         ]
         \addplot[color=purple,mark=square*,mark size=1.1,thick] table{results/mv_delta_ci_np.txt};
         \addplot[color=cyan,mark=triangle*,mark size=1.1,thick] table{results/mv_delta_ci_wbl.txt};
@@ -634,7 +659,7 @@ In the rest of this section, we first assess how well different methods perform 
 \end{figure}
 
 \subsubsection{Comparative Performance Analysis}
-In the first set of experiments, we evaluate the prediction power of different models combined with different feature extractors on DBLP, Delicious and MovieLens datasets. MAE, MRE, RMSE, MSLE, MDAE, and CI of all models using both dynamic and static feature sets has been shown in Table~\ref{table:results}. We see that in all three networks, \npglm with the LSTM Autoencoder feature set is superior to the other methods under all performance measures. For instance, our model \npglm can obtain an MAE of 1.99 for DBLP dataset, which is 15\% lower than the MAE obtained by its closest competitor, \textsc{Wbl-Glm}. As of CI, \npglm achieves 0.62 on DBLP, which is 7\% better than \textsc{Wbl-Glm}. On Delicious dataset, \npglm improves MAE and CI by 11\% and 23\%, respectively, relative to \textsc{Wbl-Glm}. Similarly, \npglm reduces MAE by 19\% and increases CI by 25\%. Comparable results hold for other performance measures as well. Accordingly, \textsc{Wbl-Glm}, which has two degrees of freedom, has shown a better performance compared to the other two ``fixed-shape'' models, namely \textsc{Exp-Glm} and \textsc{Ray-Glm}. That is while \npglm, as a non-parametric model with highly tunable shape, outperforms all the other ``less-flexible'' models by learning the true distribution of the data.
+In the first set of experiments, we evaluate the prediction power of different models combined with different feature extractors on DBLP, Delicious and MovieLens datasets. MAE, MRE, RMSE, MSLE, MDAE, and CI of all models using both dynamic and static feature sets has been shown in Table~\ref{table:results}. We see that in all three networks, \npglm with the LSTM Autoencoder feature set is superior to the other methods under all performance measures. For instance, our model \npglm can obtain an MAE of 1.99 for DBLP dataset, which is 15\% lower than the MAE obtained by its closest competitor, \textsc{Wbl-Glm}. As of CI, \npglm achieves 0.62 on DBLP, which is 7\% better than \textsc{Wbl-Glm}. On Delicious dataset, \npglm improves MAE and CI by 11\% and 23\%, respectively, relative to \textsc{Wbl-Glm}. Similarly, \npglm reduces MAE by 19\% and increases CI by 25\%. Comparable results hold for other performance measures as well. Accordingly, \textsc{Wbl-Glm}, which has two degrees of freedom, has shown a better performance compared to other models. That is while \npglm, as a non-parametric model with highly tunable shape, outperforms all the other ``less-flexible'' models by learning the true distribution of the data.
 
 Moreover, it is evident from Table~\ref{table:results} that using the dynamic features learned with the LSTM autoencoder has boosted the performance of all models over different datasets, and has outperformed the other feature extractors. Based on the results presented in Table~\ref{table:results}, the alternative dynamic feature extractor, exponential smoothing, has performed better than the static single snapshot feature extractor, yet not better than the proposed LSTM Autoencoder. Comparing the LSTM Autoencoder with exponential smoothing feature extractor, over the DBLP dataset, the proposed feature extractor has achieved 7\% less MAE and 17\% more CI with \npglm. Over Delicious, \npglm with LSTM-based features reduces MAE by about 7\% and improves CI by 7\%. Finally, on the MovieLens dataset, combining LSTM Autoencoder and \npglm leads to an improvement of 8\% and 7\% under MAE and CI, respectively. The other models behave more or less similarly when they are combined with different feature extractors. This result clearly demonstrates that our feature extraction framework is performing well on capturing the temporal dynamics of the networks.
 
